@@ -66,6 +66,18 @@ This is a tabletop helper, not a full rules engine: spell effects, targeting, re
 
 The app keeps the existing vanilla HTML/CSS/JavaScript interface and adds Vite only for bundling Yjs and `y-webrtc`. A room ID is stored in `?room=...`; the `y-webrtc` provider uses signaling to find peers, then Yjs synchronizes the document over WebRTC. Signaling does not run game logic. Private hands and libraries remain in each browser; public battlefield cards, zone counts, life, readiness, turn/priority, stack, and the log are shared. Peer awareness reports connections and disconnects. Leaving destroys the local provider; a room with no remaining peers has no persistent state. The optional Cloudflare Worker is used only when importing Moxfield deck links.
 
+### WebRTC relay for friends on restrictive networks
+
+GitHub Pages can host the app, but it cannot relay WebRTC traffic. STUN is enough on many home networks; some school, work, mobile, or strict NAT networks also need a TURN relay. In that case, create TURN credentials with a provider such as [Metered Open Relay](https://www.metered.ca/tools/openrelay/) and add the provider's `iceServers` array to `config.js`:
+
+```js
+iceServers: [
+  { urls: 'turn:your-turn-host:443', username: 'YOUR_USERNAME', credential: 'YOUR_CREDENTIAL' }
+]
+```
+
+The TURN credentials in `config.js` are shipped to every browser, so use credentials intended for public client apps (ideally short-lived credentials), never an account password or secret key. The game still uses end-to-end encrypted WebRTC data channels; TURN only relays packets when a direct path cannot be made. Without a usable TURN service, some pairs of networks will be unable to join the same room regardless of the GitHub Pages deployment.
+
 ## Build and deploy
 
 ```sh

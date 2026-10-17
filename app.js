@@ -7,7 +7,7 @@ import './config.js';
   const $ = (q, root=document) => root.querySelector(q);
   const $$ = (q, root=document) => [...root.querySelectorAll(q)];
   const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v2';
-  let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,importRows=[],toastTimer,lastScryfallRequest=0,viewerZone='library',libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0;
+  let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,importRows=[],toastTimer,lastScryfallRequest=0,viewerZone='library',libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false;
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];
   const blankState=()=>({decks:[],currentDeck:null,playerName:'Planeswalker',boardColor:'#22c55e',life:20,library:[],hand:[],battlefield:[],graveyard:[],exile:[],reserve:[],commandZone:[],room:null,actionLog:[]});
   let state=loadState();
@@ -24,7 +24,8 @@ import './config.js';
     const remote=[...p2pProvider.awareness.getStates().values()].some(s=>s.player?.id&&s.player.id!==localPlayerId);
     $('#connection-label').textContent=remote?'Peer connected':'Waiting for peer';
     $('#connection-dot').style.background=remote?'#70d6a3':'#d9aa62';
-    $('#connection-detail').textContent=remote?'Direct peer connection established. Shared state is flowing over WebRTC.':'Room is open. Share the invite link and keep this tab open.';
+    if(remote){roomConnectTimedOut=false;clearTimeout(roomConnectTimer);roomConnectTimer=null;$('#connection-detail').textContent='Direct peer connection established. Shared state is flowing over WebRTC.';}
+    else $('#connection-detail').textContent=roomConnectTimedOut?'Aucun joueur reçu. Vérifie que ton ami ouvre le lien complet sur le même site GitHub Pages. Certains réseaux bloquent WebRTC sans relais TURN.':'Salle ouverte. Envoie le lien complet à ton ami et garde cet onglet ouvert.';
   }
   function refreshP2P(){
     if(!p2pDoc||!room)return;
@@ -53,10 +54,14 @@ import './config.js';
     room={id:clean,code:clean,userId:localPlayerId,players:[],game:{},stack:[],format:format||state.roomFormat||'Standard'};
     if(!sharedGame.has('started'))p2pDoc.transact(()=>{sharedGame.set('started',false);sharedGame.set('turnNumber',1);sharedGame.set('drawnTurn',1);sharedGame.set('phase','Untap');sharedGame.set('activePlayer','');sharedGame.set('priority','');sharedGame.set('passers',[]);sharedGame.set('combatStep','attackers');sharedGame.set('combatAttackers',[]);sharedGame.set('winner','');sharedGame.set('stack',[]);});
     if(format&&!sharedGame.has('format'))sharedGame.set('format',format);
-    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc);
+    const configuredIceServers=Array.isArray(window.MTG_TABLE_CONFIG?.iceServers)?window.MTG_TABLE_CONFIG.iceServers:[];
+    // STUN handles ordinary home networks; an optional TURN server from config.js
+    // relays the encrypted WebRTC data channel when strict NAT/firewalls block P2P.
+    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
     setAwarenessPlayer();
     sharedPlayers.observeDeep(refreshP2P);sharedCards.observe(refreshP2P);sharedLog.observe(refreshP2P);sharedGame.observe(refreshP2P);p2pProvider.awareness.on('change',presenceChanged);
     p2pProvider.on('status',updateConnectionStatus);$('#room-label').textContent=`SALLE ${clean}`;$('#connection-label').textContent='Connecting';$('#connection-detail').textContent='Connecting to the peer room…';
+    roomConnectTimedOut=false;clearTimeout(roomConnectTimer);roomConnectTimer=setTimeout(()=>{roomConnectTimedOut=true;updateConnectionStatus();},15000);
     setTimeout(registerLocalPlayer,1600);setTimeout(registerLocalPlayer,5000);refreshP2P();
   }
   function presenceChanged(){
@@ -93,7 +98,7 @@ import './config.js';
   function leaveRoom(){
     if(sharedPlayers?.has(localPlayerId)){sharedPlayers.delete(localPlayerId);logAction('left the room',true);}
     if(p2pProvider){p2pProvider.awareness.off('change',presenceChanged);p2pProvider.destroy();p2pDoc?.destroy();}
-    for(const timer of stalePlayerTimers.values())clearTimeout(timer);stalePlayerTimers.clear();p2pDoc=null;p2pProvider=null;sharedPlayers=null;sharedCards=null;sharedLog=null;sharedGame=null;room=null;state.room=null;save();history.replaceState({},'',location.pathname);$('#room-label').textContent='TABLE LOCALE';$('#connection-label').textContent='Local';$('#connection-dot').style.background='#8a8a90';render();
+    clearTimeout(roomConnectTimer);roomConnectTimer=null;roomConnectTimedOut=false;for(const timer of stalePlayerTimers.values())clearTimeout(timer);stalePlayerTimers.clear();p2pDoc=null;p2pProvider=null;sharedPlayers=null;sharedCards=null;sharedLog=null;sharedGame=null;room=null;state.room=null;save();history.replaceState({},'',location.pathname);$('#room-label').textContent='TABLE LOCALE';$('#connection-label').textContent='Local';$('#connection-dot').style.background='#8a8a90';render();
   }
   function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300);}
   function logAction(message,system=false){const item={id:id(),ownerId:localPlayerId,name:state.playerName||'Planeswalker',message,system,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})};state.actionLog=[...(state.actionLog||[]),item].slice(-80);if(sharedLog){sharedLog.push([item]);if(sharedLog.length>80)sharedLog.delete(0,sharedLog.length-80);}save();renderLog();}

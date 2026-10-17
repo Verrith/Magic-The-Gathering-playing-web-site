@@ -15,11 +15,11 @@ Open the printed URL in two browser tabs. In the first tab, click **New room**, 
 
 Deck import accepts one card per line (`Lightning Bolt`) or quantities (`4x Lightning Bolt`, `4 x Lightning Bolt`, or `4 Lightning Bolt`). A 60-card list is recommended for Standard and 100 cards for Commander. Card names are looked up through Scryfall; unmatched names are shown in the import review UI. For Commander, the first parsed card is the commander even when the export does not label a Commander section; one copy is removed from the library.
 
-The Moxfield importer accepts only a public deck URL and uses Moxfield's card image CDN. Moxfield does not allow browser requests from GitHub Pages to its deck API, so this repository includes a narrow Cloudflare Worker relay in `worker/`. It fetches public deck data only; room discovery and all game state remain P2P. This is the same kind of small server-side fetch needed by link importers; Aura0's visible import dialog currently lists Archidekt and EDHREC links, not Moxfield.
+The Moxfield importer accepts a public deck URL and uses Moxfield's selected printing and card data. Art is loaded by that printing's Scryfall UUID: Moxfield's CDN face IDs can resolve to an unrelated card (for example, Ultimecia's face ID returned Gilt-Leaf Seer). Existing imported decks are corrected locally when the app loads, and importing the same Moxfield link updates that saved deck. The import works on GitHub Pages out of the box through the public `cors.tools` GET relay because Moxfield does not permit direct browser reads from another origin. Only the public Moxfield deck URL is sent to that relay; room discovery and all game state remain P2P. The free relay has response/time limits and is an external dependency. For a self-hosted relay, the repository also includes a narrow Cloudflare Worker in `worker/`.
 
-### Enable Moxfield link import
+### Optional: use your own Moxfield relay
 
-GitHub Pages cannot run server functions. Deploy the included Worker once, then point the static app at it:
+GitHub Pages cannot run server functions. The default importer uses `cors.tools` and needs no setup. To avoid relying on that public relay, deploy the included Worker once, then point the static app at it:
 
 ```sh
 npx wrangler@4 deploy --config worker/wrangler.toml
@@ -41,6 +41,9 @@ Commit and push the `config.js` change to redeploy GitHub Pages. For local devel
 - In Combat, the active player clicks their creatures to declare attackers, then finishes attackers. The defending player clicks untapped creatures to assign blockers and finishes blockers. Combat damage is simultaneous; lethal creatures go to their owners' graveyards and unblocked damage reduces life.
 - Adjust life with the table controls. Reaching zero life ends the game. Shared actions appear in the log.
 - Right-click a card for zone, tap, counter, copy, and card detail actions. The opponent's hand is hidden; library, graveyard, and exile counts are public.
+- Aura-style shortcuts work while hovering one of your cards: `Space` tap, `X` untap all, `Z` summoning-sick marker, `F` flip / face down, `U` and `I` counters, `K` clone, `Backspace` delete, `H` hand, `D` discard, `S` exile, `T` / `Y` library top / bottom, and `B` sideboard. The same actions and keys appear in the card's right-click menu. Double-faced Moxfield cards keep both printing-specific face images and `F` switches between them.
+- Right-click an empty area of the playmat for Aura-style board actions: `C` draw, `A` add a card by name, `X` untap all, and `U` / `I` create draggable +1/+1 or -1/-1 counters. Open **Keyword counters** to place other markers, then drag a marker onto a permanent to apply it.
+- Click or right-click the library, graveyard, or exile pile to search and browse that zone. Graveyard and exile cards are face-up; hover one and press `H` for hand, `S` for exile, `D` for graveyard, or `T` / `Y` for the top / bottom of the library.
 
 This is a tabletop helper, not a full rules engine: spell effects, targeting, replacement effects, priority responses, and complex combat rules are not automatically enforced. Resolve printed card effects manually. The simplified stack tracks spells and resolves them last-in, first-out to their owner's graveyard.
 

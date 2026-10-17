@@ -6,7 +6,7 @@ import './config.js';
   'use strict';
   const $ = (q, root=document) => root.querySelector(q);
   const $$ = (q, root=document) => [...root.querySelectorAll(q)];
-  const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v2';
+  const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v3';
   let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,importRows=[],toastTimer,lastScryfallRequest=0,viewerZone='library',libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false;
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];
   const blankState=()=>({decks:[],currentDeck:null,playerName:'Planeswalker',boardColor:'#22c55e',life:20,library:[],hand:[],battlefield:[],graveyard:[],exile:[],reserve:[],commandZone:[],room:null,actionLog:[]});
@@ -127,10 +127,21 @@ import './config.js';
     const query=encodeURIComponent(`!"${name}"`),url=`https://api.scryfall.com/cards/named?exact=${query}`;await paceScryfall();
     const res=await fetch(url,{headers:{'Accept':'application/json'}});if(!res.ok)throw new Error(res.status===404?'Carte introuvable':'Scryfall ne répond pas (HTTP '+res.status+')');
     const c=await res.json();const face=c.card_faces?.[0];const image=c.image_uris?.normal||face?.image_uris?.normal||null;
-    const result={name:c.name,image,small:c.image_uris?.small||face?.image_uris?.small||null,oracle:c.oracle_text||face?.oracle_text||'',type:c.type_line||'',manaCost:c.mana_cost||face?.mana_cost||'',power:c.power||face?.power||'',toughness:c.toughness||face?.toughness||'',scryfallId:c.id,printsUri:c.prints_search_uri,layout:c.layout};
+    const result={name:c.name,image,small:c.image_uris?.small||face?.image_uris?.small||null,oracle:c.oracle_text||face?.oracle_text||'',type:c.type_line||face?.type_line||'',manaCost:c.mana_cost||face?.mana_cost||'',power:c.power||face?.power||'',toughness:c.toughness||face?.toughness||'',scryfallId:c.id,printsUri:c.prints_search_uri,layout:c.layout,faces:scryfallFaces(c)};
     cache[key]=result;cacheWrite(cache);return result;
   }
-  async function lookupByFuzzy(name){await paceScryfall();const url=`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`;const r=await fetch(url);if(!r.ok)throw new Error('Carte introuvable');const c=await r.json();const f=c.card_faces?.[0];return {name:c.name,image:c.image_uris?.normal||f?.image_uris?.normal||null,small:c.image_uris?.small||f?.image_uris?.small||null,oracle:c.oracle_text||f?.oracle_text||'',type:c.type_line||'',manaCost:c.mana_cost||f?.mana_cost||'',power:c.power||f?.power||'',toughness:c.toughness||f?.toughness||'',scryfallId:c.id,printsUri:c.prints_search_uri,layout:c.layout};}
+  async function lookupByFuzzy(name){await paceScryfall();const url=`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`;const r=await fetch(url);if(!r.ok)throw new Error('Carte introuvable');const c=await r.json();const f=c.card_faces?.[0];return {name:c.name,image:c.image_uris?.normal||f?.image_uris?.normal||null,small:c.image_uris?.small||f?.image_uris?.small||null,oracle:c.oracle_text||f?.oracle_text||'',type:c.type_line||f?.type_line||'',manaCost:c.mana_cost||f?.mana_cost||'',power:c.power||f?.power||'',toughness:c.toughness||f?.toughness||'',scryfallId:c.id,printsUri:c.prints_search_uri,layout:c.layout,faces:scryfallFaces(c)};}
+  function scryfallFaces(card){return (card.card_faces||[]).map((face,index)=>({name:face.name||card.name,image:face.image_uris?.normal||scryfallPrintImage(card.id,index===1?'back':'front'),small:face.image_uris?.small||null,oracle:face.oracle_text||'',type:face.type_line||'',manaCost:face.mana_cost||'',power:face.power||'',toughness:face.toughness||''}));}
+  async function hydrateSavedDoubleFacedCards(){
+    const candidates=new Map();
+    for(const list of [...state.decks.map(d=>d.cards||[]),...['library','hand','battlefield','graveyard','exile','reserve','commandZone'].map(zone=>state[zone]||[])])for(const card of list){if(card.scryfallId&&isDoubleFaceLayout(card.layout)&&(!Array.isArray(card.faces)||card.faces.length<2))candidates.set(card.scryfallId,card);}
+    let changed=false;
+    for(const scryfallId of candidates.keys())try{await paceScryfall();const response=await fetch(`https://api.scryfall.com/cards/${encodeURIComponent(scryfallId)}`,{headers:{Accept:'application/json'}});if(!response.ok)continue;const data=await response.json(),faces=scryfallFaces(data);if(faces.length<2)continue;
+      const apply=card=>{if(card.scryfallId===scryfallId&&(!Array.isArray(card.faces)||card.faces.length<2)){Object.assign(card,{faces,layout:data.layout,image:data.image_uris?.normal||faces[0].image,name:data.name});changed=true;}};
+      for(const deck of state.decks)for(const card of deck.cards||[])apply(card);for(const zone of ['library','hand','battlefield','graveyard','exile','reserve','commandZone'])for(const card of state[zone]||[])apply(card);
+    }catch{/* Keep the saved deck usable when Scryfall is temporarily unavailable. */}
+    if(changed){save();render();for(const card of state.battlefield)if(card.scryfallId&&card.faces?.length>1)syncCard(card,'battlefield');}
+  }
   function renderDecks(){
     const host=$('#deck-list');host.innerHTML='';
     if(!state.decks.length){host.innerHTML='<div class="empty-decks">Votre bibliothèque est vide.<br>Importez votre premier deck pour commencer.</div>';return;}
@@ -242,7 +253,8 @@ import './config.js';
     if(isSpell&&!room){moveCard(card.id,'hand','graveyard');logAction(`${card.name} is an instant or sorcery; resolve its effect manually.`);return;}
     moveCard(card.id,'hand','battlefield');
   }
-  function hasPhysicalBackFace(card){return card.faces?.length>1&&['transform','modal_dfc','reversible_card','double_faced_token','flip'].includes(String(card.layout||'').toLowerCase());}
+  function isDoubleFaceLayout(layout){return ['transform','modal_dfc','reversible_card','double_faced_token'].includes(String(layout||'').toLowerCase());}
+  function hasPhysicalBackFace(card){return card.faces?.length>1&&isDoubleFaceLayout(card.layout);}
   function visibleFace(card){return hasPhysicalBackFace(card)?card.faces[Math.max(0,Math.min(card.faces.length-1,card.faceIndex||0))]:card;}
   function makeCard(card,zone){
     const face=visibleFace(card),el=document.createElement('div');el.className='magic-card'+(card.counterMarker?' counter-marker':'')+(card.tapped?' tapped':'')+(card.facedown?' facedown':'')+(card.attacking?' attacking':'')+(card.summoningSick?' summoning-sick':'')+(selectedBlockerId===card.id?' selected-blocker':'');el.draggable=!room||card.ownerId===localPlayerId;el.dataset.cardId=card.id;el.title=card.counterMarker?`${card.counterMarker} counter — drag onto a permanent`:card.facedown?'Carte face cachée':`${face.name||card.name}${card.tapped?' · tapped':''}${card.attacking?' · attacking':''}`;el.addEventListener('mouseenter',()=>{hoveredCardId=card.id;if(!card.counterMarker)showHoverCard(card)});el.addEventListener('mouseleave',()=>{if(hoveredCardId===card.id)hoveredCardId=null;hideHoverCard();});
@@ -393,6 +405,6 @@ import './config.js';
   function setTableView(zoom,panX,panY){const mat=$('#playmat'),world=$('#table-world');zoom=Math.max(.3,Math.min(2.4,zoom));mat.dataset.zoom=zoom;mat.dataset.panX=panX;mat.dataset.panY=panY;world.style.setProperty('--mat-zoom',zoom);world.style.setProperty('--pan-x',`${panX}px`);world.style.setProperty('--pan-y',`${panY}px`);}
   function fitTableView(){const mat=$('#playmat'),world=$('#table-world'),board=$('#player-board');if(!mat||!world||!board)return;const width=mat.clientWidth,height=mat.clientHeight,boardWidth=parseFloat(getComputedStyle(board).width),boardHeight=parseFloat(getComputedStyle(board).height);if(!width||!height||!boardWidth||!boardHeight)return;const zoom=Math.min(1,(width-24)/boardWidth,(height-24)/boardHeight);setTableView(zoom,(width-boardWidth*zoom)/2,(height-boardHeight*zoom)/2);}
   function zoomMat(delta){const mat=$('#playmat');setTableView((Number(mat.dataset.zoom)||1)+delta,Number(mat.dataset.panX)||0,Number(mat.dataset.panY)||0);}
-  function init(){bind();if(!(state.actionLog||[]).length){state.actionLog=[{name:'MTG Table',message:'The table is ready. Choose a deck or join a room.',system:true,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}];save();}render();fitTableView();const code=new URLSearchParams(location.search).get('room');if(code)initPeerRoom(code);}
+  function init(){bind();if(!(state.actionLog||[]).length){state.actionLog=[{name:'MTG Table',message:'The table is ready. Choose a deck or join a room.',system:true,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}];save();}render();fitTableView();hydrateSavedDoubleFacedCards();const code=new URLSearchParams(location.search).get('room');if(code)initPeerRoom(code);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

@@ -2,5 +2,8 @@
 // This key is public; never put a service_role key in browser code.
 window.MTG_TABLE_CONFIG = {
   supabaseUrl: '',
-  supabaseAnonKey: ''
+  supabaseAnonKey: '',
+  // URL of the optional Cloudflare Worker in worker/wrangler.toml.
+  // Example: https://mtg-moxfield-proxy.<your-subdomain>.workers.dev/api/decks
+  moxfieldProxyUrl: ''
 };

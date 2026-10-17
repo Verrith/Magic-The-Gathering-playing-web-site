@@ -12,6 +12,7 @@
 @media(max-width:650px){.battlefield>.zone-label{left:23%;top:17%}.board-cards>.magic-card{width:72px;height:101px}}
 .piles .pile-button{position:relative;z-index:2;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}.piles .pile-button:hover{filter:brightness(1.3)}.deck-pile #library-open,.deck-pile #draw-pile{width:100%;padding:4px 2px;font-size:8px;line-height:1.1}
 .zone-view-modal[open]{display:flex;flex-direction:column;width:min(1100px,calc(100vw - 24px));max-height:90vh;overflow:hidden}.zone-view-modal .modal-head{flex:none}.zone-view-modal .modal-head p{margin:5px 0 0;color:var(--muted);font-size:11px}.zone-view-controls{display:flex;gap:8px;padding:0 24px 12px;flex:none}.zone-view-controls button.active{border-color:#4385f5;background:#20375e;color:#eaf2ff}.zone-view-cards{flex:1;min-height:110px;overflow:auto;padding:4px 24px 22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:14px;align-content:start}.zone-view-card{padding:0;border:1px solid #3b3b43;border-radius:8px;background:#141417;text-align:left;overflow:hidden;color:var(--text)}.zone-view-card:hover{border-color:#6397f5;transform:translateY(-2px)}.zone-view-card img,.zone-view-fallback{display:block;width:100%;aspect-ratio:0.715;object-fit:cover}.zone-view-fallback{display:grid;place-items:center;text-align:center;padding:10px;background:linear-gradient(145deg,#524e43,#151514);font-size:12px}.zone-view-card>span:last-child{display:block;padding:7px 8px;font-size:10px;line-height:1.35}.zone-view-empty{grid-column:1/-1;align-self:center;justify-self:center;color:var(--muted);padding:35px 10px;font-size:13px}
+.format-option{display:flex;align-items:flex-start;gap:12px;margin:10px 0;padding:14px;border:1px solid #37373e;border-radius:9px;background:#222227;cursor:pointer}.format-option:has(input:checked){border-color:#5788e1;background:#202b3b}.format-option input{width:auto;margin-top:3px;padding:0;border:0;background:none;accent-color:#4385f5}.format-option span{display:grid;gap:4px}.format-option b{font-size:13px}.format-option small{font-size:10px;color:var(--muted)}
 @media(max-width:650px){.zone-view-controls{padding:0 16px 10px}.zone-view-controls button{padding:8px 10px;font-size:10px}.zone-view-cards{padding:4px 16px 16px;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:8px}.zone-view-card>span:last-child{font-size:9px}.deck-pile #library-open,.deck-pile #draw-pile{font-size:7px;padding:3px 1px}}
 .zone-view-controls.hidden{display:none}
 
@@ -100,3 +101,17 @@
 .search-deck-cards{height:auto;flex:1;min-height:0}
 @media(max-width:900px){.search-deck-controls{flex-wrap:wrap}.search-find{flex:1 1 225px}.search-order{flex:1 1 160px}.search-reveal{flex:1 1 175px}.search-deck-controls #search-deck-shuffle{margin:18px 0 0 auto}}
 @media(max-width:650px){.search-deck-cards{height:auto;flex:1;min-height:0}}
+
+/* Shared-room status, combat selection, and opponent hand backs. */
+.stack-strip{max-width:min(76vw,620px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#aeb6c2;font:8px/1.5 Inter,sans-serif;letter-spacing:.08em;padding-top:4px;border-top:1px solid #ffffff12;margin-top:4px}
+.game-actions:has(#ready-btn:not(.hidden)) .stack-strip{display:none}
+.game-actions .action-caption{color:#c0d9bf}
+.player-mat.active-turn{border-color:#7beb9d;box-shadow:0 0 0 2px #54dd834d,0 0 26px #39c96a38,0 7px 22px #0008}
+.player-mat.active-turn .seat-hud{color:#d6f5d6}
+.magic-card.attacking{outline:2px solid #ec7d65;box-shadow:0 0 0 4px #e4765c4c,0 7px 18px #000c}
+.magic-card.selected-blocker{outline:3px solid #8fdcfa;box-shadow:0 0 0 6px #61c1ed4a,0 7px 18px #000c}
+.opponent-hand{display:flex;align-items:center;height:19px;padding-left:2px}
+.opponent-hand i{display:block;width:12px;height:17px;margin-left:-3px;border:1px solid #aac4b2;border-radius:2px;background:repeating-linear-gradient(45deg,#315641,#315641 2px,#1c3828 2px,#1c3828 4px);box-shadow:0 1px 3px #0009}
+.opponent-hand small{margin-left:5px;color:#b7c5bd;font-size:6px;white-space:nowrap}
+.card-stats{font-weight:700;color:#c8d9ff!important;font-size:13px!important}
+@media(max-width:650px){.stack-strip{max-width:90vw;font-size:7px}.game-actions:has(#ready-btn:not(.hidden)){max-width:calc(100vw - 10px);overflow:visible}.game-actions:has(#ready-btn:not(.hidden)) .action-buttons{flex-wrap:wrap;justify-content:center}.opponent-hand{height:15px}.opponent-hand i{width:9px;height:13px}}

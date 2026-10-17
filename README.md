@@ -1,48 +1,79 @@
 # MTG Table
 
-Table de jeu Magic multijoueur, avec une interface inspirée des tables de jeu d'Aura : tapis plein écran, main en bas, piles à droite, journal/chat à gauche et commandes flottantes au-dessus du plateau. Le dépôt est un frontend HTML/CSS/JavaScript statique. Sans service externe configuré, les decks et la partie restent sauvegardés dans le stockage local du navigateur.
+A static, peer-to-peer Magic: The Gathering tabletop. Players connect directly through WebRTC, share public game state with Yjs, and use Scryfall for card data and images. No account or game server is required.
 
-## Fonctionnalités disponibles
+## Run locally
 
-- Import d'une liste collée ou d'un fichier `.txt`, avec aperçu, quantités, commentaires et sections Mainboard, Commander, Sideboard, Companion, Maybeboard et Wishboard.
-- Vérification des noms par l'API Scryfall et mise en cache locale des métadonnées et images. La recherche est exacte en premier; chaque carte non reconnue peut être corrigée et relancée en recherche approximative.
-- Bibliothèque de decks locale, sélection/chargement d'un deck, mélange, pioche, main, champ de bataille, cimetière et exil.
-- Consultation du cimetière et de l'exil en cliquant sur leurs piles; la bibliothèque permet de révéler sa première carte ou de consulter toute la liste sans la modifier.
-- Les cartes marquées **Commander** commencent dans une zone Commandant dédiée et sont exclues de la bibliothèque et de la main de départ.
-- Table multijoueur façon Aura : les plateaux des joueurs apparaissent côte à côte sur une grande toile. Glissez le fond pour vous déplacer, zoomez à la molette ou avec les boutons, puis recentrez la vue au besoin. Les cartes peuvent être posées et déplacées librement sur la toile, y compris par-dessus d'autres permanents; leurs positions sont conservées. Survolez une carte pour l’afficher en grand. Rotation au clic, menu contextuel, retournement, marqueurs, jetons, copies, détails de carte, changement d'impression et renvoi mélangé dans la bibliothèque.
-- Réserve visible pour le sideboard et le compagnon; les autres sections restent dans les données du deck.
-- Salle Supabase facultative avec pseudo, invitation par lien ou code, présence, chat synchronisé, points de vie et synchronisation des cartes publiques du champ de bataille. Les mains et bibliothèques ne sont pas publiées.
-- Lien fourni dans le brief : Aura a ouvert une salle contenant déjà un deck. Le nouveau site reste autonome; aucune donnée de cette salle Aura n'a été importée.
+Requirements: Node.js 20+ and npm.
 
-## Importer depuis Moxfield ou Archidekt
+```sh
+npm install
+npm run dev
+```
 
-Dans l'onglet **Moxfield**, collez l'URL de votre deck et utilisez **Ouvrir le deck**. Sur Moxfield, copiez ensuite la liste depuis **More → Export**, collez-la dans MTG Table et lancez l'analyse. Le deck suit le même aperçu Scryfall et le même chargement que les autres imports. L'URL seule n'est pas chargée automatiquement : Moxfield ne fournit pas d'API publique documentée pour lire les decks. Archidekt peut être importé avec une liste exportée dans l'onglet **Liste TXT**.
+Open the printed URL in two browser tabs. In the first tab, click **New room**, choose Standard or Commander, and copy the invite link. Open it in the second tab, load a deck in each tab, and click **Ready up** in both. The room shares its format with the joining player. Standard starts at 20 life; Commander starts at 40 and moves the first card in the imported list into the Command Zone. For local testing both clients can share the same browser `localStorage`; the app independently shuffles each loaded deck when entering a room.
 
-## Démarrage local
+Deck import accepts one card per line (`Lightning Bolt`) or quantities (`4x Lightning Bolt`, `4 x Lightning Bolt`, or `4 Lightning Bolt`). A 60-card list is recommended for Standard and 100 cards for Commander. Card names are looked up through Scryfall; unmatched names are shown in the import review UI. For Commander, the first parsed card is the commander even when the export does not label a Commander section; one copy is removed from the library.
 
-1. Ouvrez `index.html` dans un navigateur, ou servez le dossier avec un serveur statique local. Scryfall et Supabase nécessitent une connexion Internet.
-2. Cliquez **Choisir un deck**, puis **Importer un deck**. Collez une carte par ligne (`1 Sol Ring`) ou choisissez un fichier `.txt`, puis vérifiez et confirmez l'aperçu.
-3. Cliquez sur un deck dans le sélecteur pour le charger. Les cartes Mainboard et Commander sont mélangées dans la bibliothèque; Sideboard et Companion sont dans la zone de réserve.
+The Moxfield importer accepts only a public deck URL and uses Moxfield's card image CDN. Moxfield does not allow browser requests from GitHub Pages to its deck API, so this repository includes a narrow Cloudflare Worker relay in `worker/`. It fetches public deck data only; room discovery and all game state remain P2P. This is the same kind of small server-side fetch needed by link importers; Aura0's visible import dialog currently lists Archidekt and EDHREC links, not Moxfield.
 
-Les données sont dans `localStorage` sur cet appareil et ce navigateur. Le menu contextuel d'un deck (clic droit) permet de le supprimer. La recherche d'images suit l'API de cartes Scryfall et n'héberge pas leurs images.
+### Enable Moxfield link import
 
-## Activer le multijoueur Supabase
+GitHub Pages cannot run server functions. Deploy the included Worker once, then point the static app at it:
 
-1. Créez un projet Supabase et activez **Anonymous Sign-ins** dans Authentication → Providers.
-2. Exécutez [`supabase/schema.sql`](supabase/schema.sql) dans le SQL Editor du projet.
-3. Renseignez l'URL du projet et sa clé publique `anon`/`publishable` dans `config.js`. Ne mettez jamais une clé `service_role` dans ce fichier.
-4. Servez le site via HTTPS (localhost convient pour le développement). `index.html` charge le client Supabase depuis jsDelivr.
-5. Créez une salle privée ou saisissez son code. Le lien copié contient `?room=CODE`; les joueurs doivent ouvrir le site, saisir leur pseudo et rejoindre la salle.
+```sh
+npx wrangler@4 deploy --config worker/wrangler.toml
+```
 
-Le SQL laisse les membres lire et déplacer les objets publics du champ de bataille. Les objets en main et bibliothèque restent visibles seulement par leur propriétaire. Dans cette version, les cartes détenues par le navigateur restent locales; seules les cartes posées au champ de bataille sont publiées. La clé anon est publique par conception et protégée par RLS; aucune clé de service n'est nécessaire.
+Wrangler prints a `workers.dev` URL. Copy that URL and add `/api/decks` to it in `config.js`, for example:
 
-## GitHub Pages
+```js
+moxfieldProxyUrl: 'https://mtg-moxfield-proxy.<your-subdomain>.workers.dev/api/decks'
+```
 
-Dans Settings → Pages, choisissez **Deploy from a branch**, branche `main`, dossier `/ (root)`. Le dépôt contient déjà `index.html` à la racine. Configurez les valeurs publiques Supabase de `config.js` avant le déploiement si vous voulez les salles synchronisées. Scryfall doit rester accessible au navigateur. Aucun backend propriétaire n'est requis pour l'import TXT.
+Commit and push the `config.js` change to redeploy GitHub Pages. For local development, run `npx wrangler@4 dev --config worker/wrangler.toml --port 8787`, set the URL to `http://localhost:8787/api/decks`, then start Vite in another terminal. The Worker only accepts deck IDs (never arbitrary URLs), caches public responses briefly, and has no credentials or game logic. If Moxfield changes or blocks its undocumented API, it returns a clear error; the TXT deck-list import continues to work.
 
-## Limites connues
+## Playing
 
-- Aucun deck d'exemple Moxfield/Archidekt concret n'était présent dans le brief : le champ contenait encore `[COLLER ICI ...]`. Le lien reçu ouvre une salle de jeu Aura et non une page de deck importable; aucune prétention n'est faite d'avoir testé un import de ce deck.
-- Les interactions de table et les decks sont sauvegardés localement. Supabase synchronise les salles, les pseudos, les vies et les objets publics du champ de bataille, mais les bibliothèques et mains ne sont pas synchronisées entre navigateurs dans cette version.
-- L'API Scryfall et le CDN d'images sont des services externes soumis à leur disponibilité et à leurs limites. Les métadonnées demandées sont mises en cache dans le navigateur.
-- Ce prototype ne fait pas appliquer les règles de Magic.
+- Both players ready to start. The initial active player is chosen deterministically from the seat join time.
+- Play a creature or permanent by clicking it in your hand. Click an instant or sorcery to put it on the shared stack, then use **Pass** to resolve the LIFO stack when both players pass.
+- Turn phases are Untap, Upkeep, Main 1, Combat, Main 2, and End. Pass priority twice to advance. A card is drawn at the beginning of later turns.
+- In Combat, the active player clicks their creatures to declare attackers, then finishes attackers. The defending player clicks untapped creatures to assign blockers and finishes blockers. Combat damage is simultaneous; lethal creatures go to their owners' graveyards and unblocked damage reduces life.
+- Adjust life with the table controls. Reaching zero life ends the game. Shared actions appear in the log.
+- Right-click a card for zone, tap, counter, copy, and card detail actions. The opponent's hand is hidden; library, graveyard, and exile counts are public.
+
+This is a tabletop helper, not a full rules engine: spell effects, targeting, replacement effects, priority responses, and complex combat rules are not automatically enforced. Resolve printed card effects manually. The simplified stack tracks spells and resolves them last-in, first-out to their owner's graveyard.
+
+## Architecture
+
+```text
+┌─────────────────────┐     WebRTC data channels     ┌─────────────────────┐
+│ Browser A           │◄────────────────────────────►│ Browser B           │
+│ React-free existing │       y-webrtc signaling     │ same static app     │
+│ HTML/CSS/JS table   │       (room discovery only)  │                     │
+│                     │                               │                     │
+│ local private zones │       Yjs shared document    │ local private zones │
+│ hand + library      │◄────────────────────────────►│ hand + library      │
+│                     │   life, public cards, turns, │                     │
+│                     │   stack, readiness, action log│                    │
+└─────────────────────┘                               └─────────────────────┘
+         │                                                       │
+         └────────── Scryfall API / image CDN ──────────────────┘
+```
+
+The app keeps the existing vanilla HTML/CSS/JavaScript interface and adds Vite only for bundling Yjs and `y-webrtc`. A room ID is stored in `?room=...`; the `y-webrtc` provider uses signaling to find peers, then Yjs synchronizes the document over WebRTC. Signaling does not run game logic. Private hands and libraries remain in each browser; public battlefield cards, zone counts, life, readiness, turn/priority, stack, and the log are shared. Peer awareness reports connections and disconnects. Leaving destroys the local provider; a room with no remaining peers has no persistent state. The optional Cloudflare Worker is used only when importing Moxfield deck links.
+
+## Build and deploy
+
+```sh
+npm run build
+npm run preview
+```
+
+The Vite build uses the repository path `/Magic-The-Gathering-playing-web-site/` for GitHub Pages. The workflow in `.github/workflows/pages.yml` builds and deploys the static `dist/` directory on pushes to `main`. For a different host/path, adjust the `--base` value in `package.json`.
+
+No database, environment variables, cookies, or authentication are used by the P2P game runtime. The legacy `supabase/` and `config*.js` files are not loaded by the app.
+
+## Existing table tools
+
+Deck import review, local deck storage, commander/reserve zones, card details, counters, tokens, dice, playmat pan/zoom, and card context actions from the original table remain available. Local decks are stored in browser `localStorage`; only the live room state is transient.

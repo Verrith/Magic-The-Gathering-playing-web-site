@@ -64,7 +64,7 @@ This is a tabletop helper, not a full rules engine: spell effects, targeting, re
          └────────── Scryfall API / image CDN ──────────────────┘
 ```
 
-The app keeps the existing vanilla HTML/CSS/JavaScript interface and adds Vite only for bundling Yjs and `y-webrtc`. A room ID is stored in `?room=...`; the `y-webrtc` provider uses signaling to find peers, then Yjs synchronizes the document over WebRTC. Signaling does not run game logic. Private hands and libraries remain in each browser; public battlefield cards, zone counts, life, readiness, turn/priority, stack, and the log are shared. Peer awareness reports connections and disconnects. Leaving destroys the local provider; a room with no remaining peers has no persistent state. The optional Cloudflare Worker is used only when importing Moxfield deck links.
+The app keeps the existing vanilla HTML/CSS/JavaScript interface and adds Vite only for bundling Yjs and `y-webrtc`. A room ID is stored in `?room=...`; the `y-webrtc` provider uses `wss://y-webrtc-signaling.fly.dev` only to find peers and exchange WebRTC setup messages, then Yjs synchronizes the document over WebRTC. Signaling does not run game logic. Private hands and libraries remain in each browser; public battlefield cards, zone counts, life, readiness, turn/priority, stack, and the log are shared. Peer awareness reports connections and disconnects. Leaving destroys the local provider; a room with no remaining peers has no persistent state. The optional Cloudflare Worker is used only when importing Moxfield deck links.
 
 ### WebRTC relay for friends on restrictive networks
 

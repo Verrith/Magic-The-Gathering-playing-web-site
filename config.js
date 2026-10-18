@@ -3,6 +3,9 @@
 window.MTG_TABLE_CONFIG = {
   supabaseUrl: '',
   supabaseAnonKey: '',
+  // y-webrtc's bundled defaults still point at retired signaling hosts.
+  // This service only exchanges WebRTC connection setup messages; game state remains P2P.
+  signalingServers: ['wss://y-webrtc-signaling.fly.dev'],
   // URL of the optional Cloudflare Worker in worker/wrangler.toml.
   // Example: https://mtg-moxfield-proxy.<your-subdomain>.workers.dev/api/decks
   moxfieldProxyUrl: '',

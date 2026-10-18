@@ -55,9 +55,10 @@ import './config.js';
     if(!sharedGame.has('started'))p2pDoc.transact(()=>{sharedGame.set('started',false);sharedGame.set('turnNumber',1);sharedGame.set('drawnTurn',1);sharedGame.set('phase','Untap');sharedGame.set('activePlayer','');sharedGame.set('priority','');sharedGame.set('passers',[]);sharedGame.set('combatStep','attackers');sharedGame.set('combatAttackers',[]);sharedGame.set('winner','');sharedGame.set('stack',[]);});
     if(format&&!sharedGame.has('format'))sharedGame.set('format',format);
     const configuredIceServers=Array.isArray(window.MTG_TABLE_CONFIG?.iceServers)?window.MTG_TABLE_CONFIG.iceServers:[];
+    const signalingServers=Array.isArray(window.MTG_TABLE_CONFIG?.signalingServers)&&window.MTG_TABLE_CONFIG.signalingServers.length?window.MTG_TABLE_CONFIG.signalingServers:['wss://y-webrtc-signaling.fly.dev'];
     // STUN handles ordinary home networks; an optional TURN server from config.js
     // relays the encrypted WebRTC data channel when strict NAT/firewalls block P2P.
-    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
+    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{signaling:signalingServers,maxConns:2,filterBcConns:false,peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
     setAwarenessPlayer();
     sharedPlayers.observeDeep(refreshP2P);sharedCards.observe(refreshP2P);sharedLog.observe(refreshP2P);sharedGame.observe(refreshP2P);p2pProvider.awareness.on('change',presenceChanged);
     p2pProvider.on('status',updateConnectionStatus);$('#room-label').textContent=`SALLE ${clean}`;$('#connection-label').textContent='Connecting';$('#connection-detail').textContent='Connecting to the peer room…';

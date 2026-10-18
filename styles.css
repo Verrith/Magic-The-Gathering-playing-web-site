@@ -253,6 +253,7 @@
 .deck-pile:focus-visible{outline:2px solid #79b7ff;outline-offset:2px}
 @media(max-width:650px){.player-mat{--board-card-width:58px;--board-card-height:82px}.player-mat .piles{right:8px;top:8px;gap:5px}.player-mat .deck-pile,.player-mat .mini-zone{padding:3px;gap:3px}}
 .seat-zone-open,.seat-zone-count{width:100%;min-height:0;flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px 1px;border:0;border-radius:4px;background:transparent;color:inherit;font:inherit;text-align:center}
+.player-mat .seat-piles{z-index:5}
 .seat-zone-open{cursor:pointer;transition:background .15s,color .15s}
 .seat-zone-open:hover,.seat-zone-open:focus-visible{outline:0;background:#ffffff16;color:#fff}
 .seat-zone-open b,.seat-zone-count b{font-size:19px}

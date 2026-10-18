@@ -28,7 +28,7 @@
       <div class="playmat" id="playmat" aria-label="Grande table de jeu; faites glisser le fond pour vous déplacer et utilisez la molette pour zoomer">
         <div class="table-world" id="table-world">
           <section class="player-mat own-mat" id="player-board" data-player-board="self">
-            <div class="player-hud"><input id="player-name" value="Planeswalker" maxlength="24" aria-label="Votre pseudo"><div class="life-row"><span id="life-total">20</span><button id="life-down" aria-label="Perdre un point de vie">−</button><button id="life-up" aria-label="Gagner un point de vie">＋</button></div></div>
+            <div class="player-hud"><input id="player-name" value="Planeswalker" maxlength="24" aria-label="Votre pseudo"><div class="life-row"><input id="life-total" type="number" min="0" step="1" value="20" aria-label="Modifier vos points de vie"><button id="life-down" type="button" aria-label="Perdre un point de vie; maintenir pour en perdre dix">−</button><button id="life-up" type="button" aria-label="Gagner un point de vie; maintenir pour en gagner dix">＋</button></div></div>
             <div class="zone commander-zone" data-zone="commandZone"><div class="zone-label">COMMANDANT <span id="commander-count">0</span></div><div class="card-row" id="commander-cards"></div></div>
             <div class="zone battlefield" data-zone="battlefield"><div class="zone-label">CHAMP DE BATAILLE <span id="battle-count">0</span></div><div class="card-row board-cards" id="battlefield-cards"></div></div>
             <div class="piles">

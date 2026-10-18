@@ -126,6 +126,14 @@
 .aura-library-menu{min-width:158px;gap:1px}
 .aura-library-menu button{padding:8px 9px;font-size:12px}
 .aura-library-menu hr{margin:3px 0}
+.player-mat .life-row #life-total{flex:1;min-width:30px;width:42px;margin:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:20px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
+.player-mat .life-row #life-total::-webkit-inner-spin-button,.player-mat .life-row #life-total::-webkit-outer-spin-button,.seat-life-input::-webkit-inner-spin-button,.seat-life-input::-webkit-outer-spin-button{appearance:none;margin:0}
+.seat-life-controls{display:flex;align-items:center;gap:4px;margin-top:3px}
+.seat-life-controls>button{width:20px;height:20px;padding:0;border:1px solid #536576;border-radius:4px;background:#182533;color:#e3edf8;font-size:13px;line-height:1}
+.seat-life-controls>button:hover{background:#2a3e52}
+.seat-life-controls label{display:flex;align-items:baseline;gap:3px}
+.seat-life-controls .seat-life-input{width:42px;min-width:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:19px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
+.seat-life-controls small{font-size:8px;color:#929eaa}
 .card-sick{position:absolute;left:4px;top:4px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#18233aee;border:1px solid #91a9ee;color:#dbe6ff;font:700 10px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .card-flip-hint{position:absolute;left:4px;bottom:4px;padding:3px 5px;border-radius:5px;background:#172033e8;border:1px solid #96a9de;color:#e2e9ff;font:8px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .aura-board-menu{width:184px;min-width:184px;background:#111b30;border-color:#334155;border-radius:10px;padding:5px;gap:1px}

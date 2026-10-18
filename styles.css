@@ -123,6 +123,9 @@
 .aura-card-menu button:disabled{opacity:.38;cursor:default}
 .aura-card-menu kbd{color:#94a3b8;font:11px ui-monospace,monospace}
 .aura-card-menu hr{width:100%;border:0;border-top:1px solid #344052;margin:4px 0}
+.aura-library-menu{min-width:158px;gap:1px}
+.aura-library-menu button{padding:8px 9px;font-size:12px}
+.aura-library-menu hr{margin:3px 0}
 .card-sick{position:absolute;left:4px;top:4px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#18233aee;border:1px solid #91a9ee;color:#dbe6ff;font:700 10px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .card-flip-hint{position:absolute;left:4px;bottom:4px;padding:3px 5px;border-radius:5px;background:#172033e8;border:1px solid #96a9de;color:#e2e9ff;font:8px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .aura-board-menu{width:184px;min-width:184px;background:#111b30;border-color:#334155;border-radius:10px;padding:5px;gap:1px}

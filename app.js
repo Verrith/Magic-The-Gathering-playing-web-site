@@ -7,6 +7,7 @@ import './config.js';
   const $ = (q, root=document) => root.querySelector(q);
   const $$ = (q, root=document) => [...root.querySelectorAll(q)];
   const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v3';
+  const MAX_ROOM_PLAYERS=4;
   let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,importRows=[],toastTimer,lastScryfallRequest=0,viewerZone='library',libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false;
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];
   const blankState=()=>({decks:[],currentDeck:null,playerName:'Planeswalker',boardColor:'#22c55e',life:20,library:[],hand:[],battlefield:[],graveyard:[],exile:[],reserve:[],commandZone:[],room:null,actionLog:[]});
@@ -30,10 +31,13 @@ import './config.js';
   function refreshP2P(){
     if(!p2pDoc||!room)return;
     const live=[...p2pProvider.awareness.getStates().values()].map(s=>s.player).filter(Boolean);
-    room.players=[...sharedPlayers.entries()].map(([pid,value])=>({...mapSnapshot(value),id:pid,connected:live.some(p=>p.id===pid)}));
-    const own=room.players.find(p=>p.id===localPlayerId);if(own&&Number.isFinite(Number(own.life)))state.life=Number(own.life);
-    room.game=mapSnapshot(sharedGame);room.stack=sharedGame.get('stack')||[];room.format=sharedGame.get('format')||room.format||'Standard';$('#room-label').textContent=`SALLE ${room.code} · ${room.format.toUpperCase()}`;
-    if(state.currentDeck&&state.roomFormat!==room.format&&!room.game.started)loadDeck(state.currentDeck,room.format);
+    room.players=[...sharedPlayers.entries()].map(([pid,value])=>({...mapSnapshot(value),id:pid,connected:live.some(p=>p.id===pid)})).sort((a,b)=>(Number(a.joinedAt)||0)-(Number(b.joinedAt)||0)||a.id.localeCompare(b.id));
+    room.game=mapSnapshot(sharedGame);room.stack=sharedGame.get('stack')||[];const previousFormat=state.roomFormat;room.format=sharedGame.get('format')||room.format||'Standard';$('#room-label').textContent=`SALLE ${room.code} · ${room.format.toUpperCase()}`;
+    if(state.currentDeck&&previousFormat!==room.format&&!room.game.started)loadDeck(state.currentDeck,room.format);
+    state.roomFormat=room.format;
+    const own=room.players.find(p=>p.id===localPlayerId),startLife=Number(sharedGame.get('startingLife'))||(room.format==='Commander'?40:20);
+    if(!room.game.started){state.life=startLife;if(own&&Number(own.life)!==startLife)setPlayerField('life',startLife);}
+    else if(own&&Number.isFinite(Number(own.life)))state.life=Number(own.life);
     state.battlefield=[...sharedCards.values()].filter(c=>c.zone==='battlefield');
     state.actionLog=sharedLog.toArray().slice(-80);save();updateConnectionStatus();render();
     maybeStartGame();maybeAutoDraw();
@@ -53,12 +57,12 @@ import './config.js';
     p2pDoc=new Y.Doc();sharedPlayers=p2pDoc.getMap('players');sharedCards=p2pDoc.getMap('public-cards');sharedLog=p2pDoc.getArray('log');sharedGame=p2pDoc.getMap('game');
     room={id:clean,code:clean,userId:localPlayerId,players:[],game:{},stack:[],format:format||state.roomFormat||'Standard'};
     if(!sharedGame.has('started'))p2pDoc.transact(()=>{sharedGame.set('started',false);sharedGame.set('turnNumber',1);sharedGame.set('drawnTurn',1);sharedGame.set('phase','Untap');sharedGame.set('activePlayer','');sharedGame.set('priority','');sharedGame.set('passers',[]);sharedGame.set('combatStep','attackers');sharedGame.set('combatAttackers',[]);sharedGame.set('winner','');sharedGame.set('stack',[]);});
-    if(format&&!sharedGame.has('format'))sharedGame.set('format',format);
+    if(format&&!sharedGame.has('format')){sharedGame.set('format',format);sharedGame.set('startingLife',format==='Commander'?40:20);}
     const configuredIceServers=Array.isArray(window.MTG_TABLE_CONFIG?.iceServers)?window.MTG_TABLE_CONFIG.iceServers:[];
     const signalingServers=Array.isArray(window.MTG_TABLE_CONFIG?.signalingServers)&&window.MTG_TABLE_CONFIG.signalingServers.length?window.MTG_TABLE_CONFIG.signalingServers:['wss://y-webrtc-signaling.fly.dev'];
     // STUN handles ordinary home networks; an optional TURN server from config.js
     // relays the encrypted WebRTC data channel when strict NAT/firewalls block P2P.
-    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{signaling:signalingServers,maxConns:2,filterBcConns:false,peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
+    p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{signaling:signalingServers,maxConns:MAX_ROOM_PLAYERS,filterBcConns:false,peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
     setAwarenessPlayer();
     sharedPlayers.observeDeep(refreshP2P);sharedCards.observe(refreshP2P);sharedLog.observe(refreshP2P);sharedGame.observe(refreshP2P);p2pProvider.awareness.on('change',presenceChanged);
     p2pProvider.on('status',updateConnectionStatus);$('#room-label').textContent=`SALLE ${clean}`;$('#connection-label').textContent='Connecting';$('#connection-detail').textContent='Connecting to the peer room…';
@@ -78,10 +82,11 @@ import './config.js';
   function registerLocalPlayer(){
     if(!p2pDoc||!room)return;
     const liveIds=new Set([...p2pProvider.awareness.getStates().values()].map(s=>s.player?.id).filter(Boolean));
-    for(const [pid] of sharedPlayers.entries())if(pid!==localPlayerId&&!liveIds.has(pid)&&sharedPlayers.size>=2)sharedPlayers.delete(pid);
+    for(const [pid] of sharedPlayers.entries())if(pid!==localPlayerId&&!liveIds.has(pid)&&sharedPlayers.size>=MAX_ROOM_PLAYERS)sharedPlayers.delete(pid);
     if(!sharedPlayers.has(localPlayerId)){
-      if(sharedPlayers.size>=2){toast('Cette salle a déjà deux joueurs connectés.');$('#connection-detail').textContent='Room full · this table supports two players.';return;}
-      const p=new Y.Map();p.set('name',state.playerName||'Planeswalker');p.set('boardColor',boardColor(state.boardColor));p.set('life',state.life||20);p.set('ready',false);p.set('handCount',state.hand.length);p.set('libraryCount',state.library.length);p.set('graveyardCount',state.graveyard.length);p.set('exileCount',state.exile.length);p.set('joinedAt',Date.now());sharedPlayers.set(localPlayerId,p);
+      if(sharedPlayers.size>=MAX_ROOM_PLAYERS){toast(`Cette salle est complète (${MAX_ROOM_PLAYERS} joueurs maximum).`);$('#connection-detail').textContent=`Room full · maximum ${MAX_ROOM_PLAYERS} players.`;return;}
+      const startLife=Number(sharedGame.get('startingLife'))||(room.format==='Commander'?40:20);state.life=startLife;
+      const p=new Y.Map();p.set('name',state.playerName||'Planeswalker');p.set('boardColor',boardColor(state.boardColor));p.set('life',startLife);p.set('ready',false);p.set('handCount',state.hand.length);p.set('libraryCount',state.library.length);p.set('graveyardCount',state.graveyard.length);p.set('exileCount',state.exile.length);p.set('joinedAt',Date.now());sharedPlayers.set(localPlayerId,p);
       logAction('joined the room',true);
     }
     setAwarenessPlayer();refreshP2P();
@@ -89,7 +94,7 @@ import './config.js';
   function maybeStartGame(){
     if(!sharedPlayers||sharedGame.get('started')||sharedGame.get('winner'))return;
     const players=[...sharedPlayers.entries()].map(([pid,p])=>({id:pid,...mapSnapshot(p)}));
-    if(players.length!==2||players.some(p=>!p.ready))return;
+    if(players.length<2||players.length>MAX_ROOM_PLAYERS||players.some(p=>!p.ready))return;
     // Both clients derive the same opening active player, so simultaneous ready events converge.
     const active=[...players].sort((a,b)=>a.joinedAt-b.joinedAt||a.id.localeCompare(b.id))[0].id;
     p2pDoc.transact(()=>{if(!sharedGame.get('started')){sharedGame.set('started',true);sharedGame.set('activePlayer',active);sharedGame.set('priority',active);sharedGame.set('turnNumber',1);sharedGame.set('drawnTurn',1);sharedGame.set('phase','Untap');sharedGame.set('combatStep','attackers');sharedGame.set('passers',[]);sharedGame.set('winner','');}});
@@ -159,7 +164,7 @@ import './config.js';
     renderDecks();$('#life-total').textContent=state.life;$('#player-name').value=state.playerName||'Planeswalker';$('#player-name-setting').value=state.playerName||'Planeswalker';$('#board-color-setting').value=boardColor(state.boardColor);$('#player-board').style.setProperty('--player-color',boardColor(state.boardColor));$('#player-board').dataset.playerId=localPlayerId;$('#hand-count').textContent=state.hand.length;$('#library-count').textContent=state.library.length;$('#graveyard-count').textContent=state.graveyard.length;$('#exile-count').textContent=state.exile.length;$('#reserve-count').textContent=state.reserve.length;$('#commander-count').textContent=state.commandZone.length;renderLog();
     const current=state.decks.find(d=>d.id===state.currentDeck);if(current)$('#game-title').textContent=current.name;
     const game=room?.game||{},mine=room?.players?.find(p=>p.id===localPlayerId),opponent=room?.players?.find(p=>p.id!==localPlayerId),ready=$('#ready-btn');
-    $('#turn-label').textContent=!room?'TABLE LOCALE':!mine?'JOINING ROOM…':game.winner?`${game.winner===localPlayerId?'YOU WIN':'OPPONENT WINS'} · GAME OVER`:game.started?`TURN ${game.turnNumber||1} · ${String(game.phase||'Untap').toUpperCase()}${game.phase==='Combat'?` · ${game.combatStep||'attackers'}`:''}`:`LOBBY · ${room.players.length}/2 PLAYERS${opponent?` · ${opponent.connected?'OPPONENT ONLINE':'OPPONENT DISCONNECTED'}`:''}`;
+    $('#turn-label').textContent=!room?'TABLE LOCALE':!mine?'JOINING ROOM…':game.winner?`${game.winner===localPlayerId?'YOU WIN':'OPPONENT WINS'} · GAME OVER`:game.started?`TURN ${game.turnNumber||1} · ${String(game.phase||'Untap').toUpperCase()}${game.phase==='Combat'?` · ${game.combatStep||'attackers'}`:''}`:`LOBBY · ${room.players.length}/${MAX_ROOM_PLAYERS} JOUEURS${opponent?` · ${opponent.connected?'JOUEUR EN LIGNE':'JOUEUR DÉCONNECTÉ'}`:''}`;
     ready.classList.toggle('hidden',!room||!!game.started);ready.textContent=mine?.ready?'Cancel ready':state.currentDeck?'Ready up':'Choose a deck first';ready.disabled=!mine||!state.currentDeck;
     $('#combat-btn').classList.toggle('hidden',!game.started||game.phase!=='Combat');$('#combat-btn').textContent=game.combatStep==='attackers'?'Finish attackers':'Finish blockers';$('#combat-btn').disabled=(game.combatStep==='attackers'&&game.activePlayer!==localPlayerId)||(game.combatStep==='blockers'&&game.activePlayer===localPlayerId);
     $('#pass-turn').textContent=game.stack?.length?'Pass priority':'Pass';$('#pass-turn').disabled=!!(room&&game.started&&(game.priority&&game.priority!==localPlayerId||game.winner));
@@ -169,7 +174,26 @@ import './config.js';
     for(const [zone,host] of Object.entries({hand:'#hand-cards',graveyard:'#graveyard-cards',exile:'#exile-cards',reserve:'#reserve-cards',commandZone:'#commander-cards'})){const box=$(host);box.innerHTML='';const visibleCards=zone==='graveyard'||zone==='exile'?state[zone].slice(-1):state[zone];for(const card of visibleCards)box.append(makeCard(card,zone));}
     renderOtherMats();renderRemoteCursors();
   }
-  function renderOtherMats(){const host=$('#other-mats'),players=(room?.players||[]).filter(p=>p.id!==room?.userId).slice(0,1);host.innerHTML='';const boardWidth=parseFloat(getComputedStyle($('#player-board')).width)||760;host.style.width=`${boardWidth*2+32}px`;host.style.height=`${parseFloat(getComputedStyle($('#player-board')).height)||460}px`;for(const player of players){const seat=document.createElement('section');seat.className='player-mat opponent-mat occupied'+(player.id===room?.game?.activePlayer?' active-turn':'');seat.dataset.playerBoard='opponent';seat.dataset.playerId=player.id;seat.style.setProperty('--player-color',boardColor(player.boardColor));seat.style.left=`${boardWidth+32}px`;seat.style.top='0px';const title=player.name||'Adversaire',life=Number.isFinite(Number(player.life))?Math.trunc(Number(player.life)):'—',handCount=Math.max(0,Number(player.handCount)||0);seat.innerHTML=`<div class="seat-hud"><span class="seat-name">${esc(title)}${!player.connected?' · déconnecté':''}</span><strong>${life}<small> PV</small></strong><div class="opponent-hand" aria-label="${handCount} cartes en main">${Array.from({length:Math.min(7,handCount)},()=>'<i></i>').join('')}<small>${handCount} cartes</small></div></div><div class="seat-piles"><span>BIBLIOTHÈQUE</span><b>${player.libraryCount??'—'}</b><span>CIMETIÈRE</span><b>${player.graveyardCount??'—'}</b><span>EXIL</span><b>${player.exileCount??'—'}</b></div><div class="zone battlefield"><div class="card-row board-cards seat-cards"></div></div>`;for(const card of state.battlefield.filter(c=>c.ownerId===player.id))seat.querySelector('.seat-cards').append(makeCard(card,'battlefield'));host.append(seat);}}
+  function renderOtherMats(){
+    const host=$('#other-mats'),players=room?.players||[],me=room?.userId,world=$('#table-world'),ownBoard=$('#player-board');
+    host.innerHTML='';
+    const boardWidth=ownBoard.getBoundingClientRect().width||760,boardHeight=ownBoard.getBoundingClientRect().height||460,gap=24,columns=2;
+    const seatIndex=new Map(players.map((player,index)=>[player.id,index]));
+    const columnCount=Math.max(1,Math.ceil(players.length/columns)),rowCount=Math.min(columns,Math.max(1,players.length));
+    const position=(board,index)=>{const column=Math.floor(index/columns),row=index%columns;board.style.left=`${column*(boardWidth+gap)}px`;board.style.top=`${row*(boardHeight+gap)}px`;};
+    position(ownBoard,seatIndex.get(me)??0);
+    host.style.width=`${columnCount*(boardWidth+gap)}px`;host.style.height=`${rowCount*(boardHeight+gap)}px`;
+    world.style.width=host.style.width;world.style.height=host.style.height;
+    for(const player of players){
+      if(player.id===me)continue;
+      const index=seatIndex.get(player.id)??0,seat=document.createElement('section');
+      seat.className='player-mat opponent-mat occupied'+(player.id===room?.game?.activePlayer?' active-turn':'');seat.dataset.playerBoard='opponent';seat.dataset.playerId=player.id;seat.style.setProperty('--player-color',boardColor(player.boardColor));position(seat,index);
+      const title=player.name||'Adversaire',life=Number.isFinite(Number(player.life))?Math.trunc(Number(player.life)):'—',handCount=Math.max(0,Number(player.handCount)||0);
+      seat.innerHTML=`<div class="seat-hud"><span class="seat-name">${esc(title)}${!player.connected?' · déconnecté':''}</span><strong>${life}<small> PV</small></strong><div class="opponent-hand" aria-label="${handCount} cartes en main">${Array.from({length:Math.min(7,handCount)},()=>'<i></i>').join('')}<small>${handCount} cartes</small></div></div><div class="seat-piles"><span>BIBLIOTHÈQUE</span><b>${player.libraryCount??'—'}</b><span>CIMETIÈRE</span><b>${player.graveyardCount??'—'}</b><span>EXIL</span><b>${player.exileCount??'—'}</b></div><div class="zone battlefield"><div class="card-row board-cards seat-cards"></div></div>`;
+      for(const card of state.battlefield.filter(c=>c.ownerId===player.id))seat.querySelector('.seat-cards').append(makeCard(card,'battlefield'));
+      host.append(seat);
+    }
+  }
   function renderRemoteCursors(){
     $$('.remote-cursor').forEach(el=>el.remove());if(!p2pProvider)return;
     for(const awareness of p2pProvider.awareness.getStates().values()){
@@ -179,6 +203,8 @@ import './config.js';
     }
   }
   function isCreature(card){return /\bcreature\b/i.test(card.type||'');}
+  function activeRoomPlayers(){return (room?.players||[]).filter(player=>!sharedPlayers?.get(player.id)?.get('eliminated'));}
+  function nextRoomPlayer(playerId){const players=activeRoomPlayers(),index=players.findIndex(player=>player.id===playerId);return players[(index+1)%players.length]?.id||playerId;}
   function cardPower(card){const n=Number.parseInt(card.power,10);return (Number.isFinite(n)?n:0)+(Number(card.counters)||0);}
   function cardToughness(card){const n=Number.parseInt(card.toughness,10);return (Number.isFinite(n)?n:0)+(Number(card.counters)||0);}
   function writePublicCard(card){if(!sharedCards)return;const data=publicCard(card,card.zone||'battlefield');sharedCards.set(card.id,data);}
@@ -203,14 +229,14 @@ import './config.js';
   }
   function finishCombatStep(){
     if(!room||sharedGame.get('phase')!=='Combat')return;
-    if(sharedGame.get('combatStep')==='attackers'&&sharedGame.get('activePlayer')===localPlayerId){sharedGame.set('combatStep','blockers');sharedGame.set('priority',room.players.find(p=>p.id!==localPlayerId)?.id||localPlayerId);sharedGame.set('passers',[]);logAction('Attackers declared. Defending player may assign blockers.',true);}
+    if(sharedGame.get('combatStep')==='attackers'&&sharedGame.get('activePlayer')===localPlayerId){sharedGame.set('combatStep','blockers');sharedGame.set('priority',nextRoomPlayer(localPlayerId));sharedGame.set('passers',[]);logAction('Attackers declared. Defending players may assign blockers.',true);}
     else if(sharedGame.get('combatStep')==='blockers'&&sharedGame.get('activePlayer')!==localPlayerId){applyCombatDamage();if(!sharedGame.get('winner'))advancePhase();}
     refreshP2P();
   }
   function applyCombatDamage(){
     // Combat damage is simultaneous: calculate all damage before moving any lethal creature.
-    const cards=[...sharedCards.values()].filter(c=>c.zone==='battlefield'),damage=new Map(),attackers=cards.filter(c=>c.attacking),active=sharedGame.get('activePlayer'),defender=room.players.find(p=>p.id!==active)?.id;
-    for(const attacker of attackers){const blocks=(attacker.blockers||[]).map(id=>cards.find(c=>c.id===id)).filter(Boolean);if(!blocks.length){if(defender){const p=sharedPlayers.get(defender);if(p){const life=Math.max(0,Number(p.get('life')||20)-cardPower(attacker));p.set('life',life);if(life===0)sharedGame.set('winner',active);}}continue;}
+    const cards=[...sharedCards.values()].filter(c=>c.zone==='battlefield'),damage=new Map(),attackers=cards.filter(c=>c.attacking),active=sharedGame.get('activePlayer'),defender=nextRoomPlayer(active);
+    for(const attacker of attackers){const blocks=(attacker.blockers||[]).map(id=>cards.find(c=>c.id===id)).filter(Boolean);if(!blocks.length){if(defender){const p=sharedPlayers.get(defender);if(p){const life=Math.max(0,Number(p.get('life')||20)-cardPower(attacker));p.set('life',life);if(life===0){p.set('eliminated',true);checkRoomWinner();}}}continue;}
       const block=blocks[0];damage.set(block.id,(damage.get(block.id)||0)+cardPower(attacker));damage.set(attacker.id,(damage.get(attacker.id)||0)+cardPower(block));
     }
     for(const card of cards){if((damage.get(card.id)||0)>=cardToughness(card)&&damage.has(card.id)){const owner=sharedPlayers.get(card.ownerId);sharedCards.delete(card.id);if(owner)owner.set('graveyardCount',Number(owner.get('graveyardCount')||0)+1);if(card.ownerId===localPlayerId){state.battlefield=state.battlefield.filter(c=>c.id!==card.id);state.graveyard.push({...card,zone:'graveyard',attacking:false,blocking:null});}logAction(`${card.name} was destroyed in combat`);}}
@@ -218,7 +244,7 @@ import './config.js';
     syncCounts();const winner=sharedGame.get('winner');if(winner)logAction(`${room.players.find(p=>p.id===winner)?.name||'A player'} wins the game!`,true);else logAction('Combat damage resolved.',true);
   }
   function advancePhase(){
-    const phase=sharedGame.get('phase'),turn=Number(sharedGame.get('turnNumber')||1),active=sharedGame.get('activePlayer'),players=room.players.map(p=>p.id),meta=sharedGame;
+    const phase=sharedGame.get('phase'),turn=Number(sharedGame.get('turnNumber')||1),active=sharedGame.get('activePlayer'),players=activeRoomPlayers().map(p=>p.id),meta=sharedGame;
     if(phase==='End'){
       const index=players.indexOf(active),next=players[(index+1)%players.length]||active;meta.set('activePlayer',next);meta.set('turnNumber',turn+1);meta.set('phase','Untap');meta.set('combatStep','attackers');meta.set('combatAttackers',[]);
       for(const card of sharedCards.values())if(card.ownerId===next&&card.tapped){const c={...card,tapped:false,attacking:false,blocking:null,blockers:[]};sharedCards.set(card.id,c);if(next===localPlayerId){const local=state.battlefield.find(x=>x.id===card.id);if(local)Object.assign(local,c);}}
@@ -235,13 +261,15 @@ import './config.js';
   }
   function passPriority(){
     if(!room||!sharedGame.get('started')){logAction('passed priority');return;}
-    const me=localPlayerId,priority=sharedGame.get('priority'),other=room.players.find(p=>p.id!==me)?.id;if(priority&&priority!==me){toast('It is the other player’s priority.');return;}
+    const me=localPlayerId,priority=sharedGame.get('priority');if(priority&&priority!==me){toast('It is another player’s priority.');return;}
     let passed=[...(sharedGame.get('passers')||[])];if(!passed.includes(me))passed.push(me);
-    if(other&&!passed.includes(other)){sharedGame.set('passers',passed);sharedGame.set('priority',other);logAction('passed priority');refreshP2P();return;}
+    const ordered=activeRoomPlayers().map(p=>p.id),index=ordered.indexOf(me);let next='';
+    for(let offset=1;offset<ordered.length;offset++){const candidate=ordered[(index+offset)%ordered.length];if(!passed.includes(candidate)){next=candidate;break;}}
+    if(next){sharedGame.set('passers',passed);sharedGame.set('priority',next);logAction('passed priority');refreshP2P();return;}
     sharedGame.set('passers',[]);
     if((sharedGame.get('stack')||[]).length){resolveStackTop();refreshP2P();return;}
     if(sharedGame.get('phase')==='Combat'&&sharedGame.get('combatStep')==='attackers'){
-      sharedGame.set('combatStep','blockers');sharedGame.set('priority',other||me);logAction('Attackers declared. Defending player may assign blockers.',true);refreshP2P();return;
+      sharedGame.set('combatStep','blockers');sharedGame.set('priority',nextRoomPlayer(sharedGame.get('activePlayer')));logAction('Attackers declared. Defending players may assign blockers.',true);refreshP2P();return;
     }
     if(sharedGame.get('phase')==='Combat'&&sharedGame.get('combatStep')==='blockers'){applyCombatDamage();if(!sharedGame.get('winner')){sharedGame.set('phase','Main 2');sharedGame.set('combatStep','attackers');sharedGame.set('priority',sharedGame.get('activePlayer'));}refreshP2P();return;}
     advancePhase();refreshP2P();
@@ -249,7 +277,7 @@ import './config.js';
   function castFromHand(card){
     if(!state.hand.some(c=>c.id===card.id))return;
     const isSpell=/\b(instant|sorcery)\b/i.test(card.type||'');if(isSpell&&room?.game?.started){if(sharedGame.get('priority')!==localPlayerId){toast('You do not have priority.');return;}
-      state.hand=state.hand.filter(c=>c.id!==card.id);card.zone='stack';card.ownerId=localPlayerId;sharedGame.set('stack',[...(sharedGame.get('stack')||[]),publicCard(card,'stack')]);sharedGame.set('priority',room.players.find(p=>p.id!==localPlayerId)?.id||localPlayerId);sharedGame.set('passers',[]);syncCounts();save();render();logAction(`cast ${card.name}`);return;
+      state.hand=state.hand.filter(c=>c.id!==card.id);card.zone='stack';card.ownerId=localPlayerId;sharedGame.set('stack',[...(sharedGame.get('stack')||[]),publicCard(card,'stack')]);sharedGame.set('priority',nextRoomPlayer(localPlayerId));sharedGame.set('passers',[]);syncCounts();save();render();logAction(`cast ${card.name}`);return;
     }
     if(isSpell&&!room){moveCard(card.id,'hand','graveyard');logAction(`${card.name} is an instant or sorcery; resolve its effect manually.`);return;}
     moveCard(card.id,'hand','battlefield');
@@ -368,13 +396,14 @@ import './config.js';
   }
   function drawCards(n=1){if(!state.library.length){toast('Your library is empty.');return;}let drew=0;for(let i=0;i<n&&state.library.length;i++){const c=state.library.shift();c.zone='hand';state.hand.push(c);drew++;}save();render();syncCounts();logAction(`drew ${drew} card${drew===1?'':'s'}`);}
   function syncCard(card,zone){if(!room||!sharedCards)return;card.ownerId=card.ownerId||localPlayerId;card.zone=zone;if(zone==='battlefield'||zone==='graveyard'||zone==='exile')sharedCards.set(card.id,publicCard(card,zone));else sharedCards.delete(card.id);syncCounts();}
-  function setupDrops(){for(const zone of $$('.zone[data-zone]')){if(zone.dataset.zone==='battlefield')continue;zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag-over');try{const {id:cardId,from}=JSON.parse(e.dataTransfer.getData('text/plain'));if(from!==zone.dataset.zone)moveCard(cardId,from,zone.dataset.zone);}catch{}});}const mat=$('#playmat');mat.addEventListener('dragover',e=>e.preventDefault());mat.addEventListener('drop',e=>{if(e.target.closest('.zone[data-zone]:not([data-zone="battlefield"])'))return;try{const {id:cardId,from}=JSON.parse(e.dataTransfer.getData('text/plain')),card=state[from]?.find(c=>c.id===cardId),board=from==='battlefield'&&card?.ownerId?document.querySelector(`.player-mat[data-player-id="${CSS.escape(card.ownerId)}"]`):$('#player-board'),rect=(board||$('#player-board')).getBoundingClientRect(),position={x:(e.clientX-rect.left)/rect.width*100,y:(e.clientY-rect.top)/rect.height*100};if(from==='battlefield')repositionCard(cardId,position);else moveCard(cardId,from,'battlefield',position);}catch{}});
+  function setupDrops(){for(const zone of $$('.zone[data-zone]')){if(zone.dataset.zone==='battlefield')continue;zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag-over');try{const {id:cardId,from}=JSON.parse(e.dataTransfer.getData('text/plain'));if(from!==zone.dataset.zone)moveCard(cardId,from,zone.dataset.zone);}catch{}});}const mat=$('#playmat');mat.addEventListener('dragover',e=>e.preventDefault());mat.addEventListener('drop',e=>{if(e.target.closest('.zone[data-zone]:not([data-zone="battlefield"])'))return;try{const {id:cardId,from}=JSON.parse(e.dataTransfer.getData('text/plain')),card=state[from]?.find(c=>c.id===cardId),targetBoard=e.target.closest('.player-mat');if(!card||targetBoard?.dataset.playerId!==localPlayerId||card.ownerId&&card.ownerId!==localPlayerId)return;const rect=$('#player-board').getBoundingClientRect(),position={x:Math.max(2,Math.min(94,(e.clientX-rect.left)/rect.width*100)),y:Math.max(2,Math.min(88,(e.clientY-rect.top)/rect.height*100))};if(from==='battlefield')repositionCard(cardId,position);else moveCard(cardId,from,'battlefield',position);}catch{}});
     // Drag empty table space to travel around the play area. Cards keep native drag-and-drop.
     let pointer=null;mat.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('.magic-card,button,input,select,a,.zone:not(.battlefield)'))return;pointer={id:e.pointerId,x:e.clientX,y:e.clientY,panX:Number(mat.dataset.panX)||0,panY:Number(mat.dataset.panY)||0};mat.setPointerCapture(e.pointerId);mat.classList.add('panning');});mat.addEventListener('pointermove',e=>{if(p2pProvider&&Date.now()-lastCursorSentAt>=32){lastCursorSentAt=Date.now();const board=e.target.closest?.('.player-mat')||$('#player-board'),rect=board.getBoundingClientRect();if(rect.width&&rect.height)p2pProvider.awareness.setLocalStateField('cursor',{boardId:board.dataset.playerId||localPlayerId,x:(e.clientX-rect.left)/rect.width*100,y:(e.clientY-rect.top)/rect.height*100});}if(!pointer||e.pointerId!==pointer.id)return;setTableView(Number(mat.dataset.zoom)||1,pointer.panX+e.clientX-pointer.x,pointer.panY+e.clientY-pointer.y);});mat.addEventListener('pointerleave',()=>p2pProvider?.awareness.setLocalStateField('cursor',null));const endPan=e=>{if(pointer&&e.pointerId===pointer.id){pointer=null;mat.classList.remove('panning');}};mat.addEventListener('pointerup',endPan);mat.addEventListener('pointercancel',endPan);
     mat.addEventListener('wheel',e=>{e.preventDefault();const rect=mat.getBoundingClientRect(),old=Number(mat.dataset.zoom)||1,next=Math.max(.3,Math.min(2.4,old*(e.deltaY<0?1.1:.9))),px=e.clientX-(rect.left+rect.width/2),py=e.clientY-(rect.top+rect.height/2),panX=Number(mat.dataset.panX)||0,panY=Number(mat.dataset.panY)||0,centerOffsetX=innerWidth<=650?0:Math.min(175,innerWidth*.15);setTableView(next,panX+(px-centerOffsetX-panX)*(1-next/old),panY+(py-panY)*(1-next/old));},{passive:false});}
-  function createRoom(format='Standard'){leaveRoom();const code=Math.random().toString(36).slice(2,10).toUpperCase();state.roomFormat=format;initPeerRoom(code,format);navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${code}`).then(()=>toast(`${format} room created — invite link copied`)).catch(()=>toast(`${format} room ${code} created — copy its URL to invite`));}
+  function createRoom(format='Standard'){leaveRoom();const code=Math.random().toString(36).slice(2,10).toUpperCase();state.roomFormat=format;state.life=format==='Commander'?40:20;save();render();initPeerRoom(code,format);navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${code}`).then(()=>toast(`${format} room created — invite link copied`)).catch(()=>toast(`${format} room ${code} created — copy its URL to invite`));}
   function joinRoom(code){const clean=String(code||'').trim().replace(/^.*[?&]room=/i,'').replace(/[^a-z0-9-]/gi,'').slice(0,12);if(!clean){toast('Enter a room code or invite URL.');return;}if(room?.code===clean.toUpperCase())return;leaveRoom();initPeerRoom(clean);}
-  function changeLife(delta){state.life=Math.max(0,state.life+delta);save();render();syncCounts();logAction(`${delta<0?'lost':'gained'} ${Math.abs(delta)} life`);if(room){const p=playerMap();if(p)p.set('life',state.life);if(state.life===0){const winner=room.players.find(x=>x.id!==localPlayerId)?.id||'';sharedGame.set('winner',winner);logAction(`${winner===localPlayerId?'You win':'You lose'} — life total reached zero.`,true);}}}
+  function checkRoomWinner(){const survivors=room.players.filter(p=>!sharedPlayers.get(p.id)?.get('eliminated'));if(survivors.length===1)sharedGame.set('winner',survivors[0].id);}
+  function changeLife(delta){state.life=Math.max(0,state.life+delta);save();render();syncCounts();logAction(`${delta<0?'lost':'gained'} ${Math.abs(delta)} life`);if(room){const p=playerMap();if(p){p.set('life',state.life);if(state.life===0){p.set('eliminated',true);checkRoomWinner();logAction(`${state.playerName} was eliminated at 0 life.`,true);}}}}
   function randomDie(){const sides=Number($('#dice-type').value.slice(1))||6;const value=1+Math.floor(Math.random()*sides);logAction(`a lancé un ${$('#dice-type').value} : ${value}`);toast(`${$('#dice-type').value} : ${value}`);return value;}
   function newDie(){const type=$('#dice-type').value;const value=randomDie();const c={id:id(),name:`${type.toUpperCase()} · ${value}`,type:'Dé',oracle:'Dé de jeu',zone:'battlefield',ownerId:localPlayerId,tapped:false,counters:0};state.battlefield.push(c);save();render();syncCard(c,'battlefield');logAction(`a placé un dé ${type.toUpperCase()} sur la table`);}
   function sendChat(){const input=$('#chat-message'),message=input.value.trim();if(!message)return;input.value='';logAction(message);}
@@ -400,7 +429,7 @@ import './config.js';
     $('#search-deck-close').onclick=()=>$('#search-deck-dialog').close();$('#search-deck-input').oninput=renderSearchDeck;$('#search-deck-order').onchange=e=>{searchDeckOrder=e.target.value;renderSearchDeck();};$$('#search-deck-dialog [data-reveal]').forEach(b=>b.onclick=()=>{searchReveal=b.dataset.reveal;$$('#search-deck-dialog [data-reveal]').forEach(x=>x.classList.toggle('active',x===b));renderSearchDeck();});$('#search-deck-shuffle').onclick=()=>{if(searchSourceZone==='library'){state.library=shuffleArray(state.library);save();render();logAction('a mélangé sa bibliothèque');}$('#search-deck-dialog').close();};$('#search-deck-dialog').addEventListener('click',e=>{if(e.target===$('#search-deck-dialog'))$('#search-deck-dialog').close();});document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(!$('#search-deck-dialog').open)openSearchDeck();else $('#search-deck-input').focus();return;}if(e.altKey||e.ctrlKey||e.metaKey)return;const target=e.target;if(target instanceof HTMLInputElement||target instanceof HTMLTextAreaElement||target instanceof HTMLSelectElement||target?.isContentEditable)return;const key=e.key.toLowerCase();if($('#search-deck-dialog').open){const destination=({h:'hand',d:'graveyard',s:'exile',t:'top',y:'bottom'})[key];if(destination){e.preventDefault();moveSearchedCard(destination);}return;}if($('#card-dialog').open||$('#command-dialog').open||$('#deck-picker').open||$('#import-dialog').open||$('#settings-dialog').open||$('#new-game-dialog').open)return;if(key==='c'){e.preventDefault();drawCards();return;}if(key==='a'){e.preventDefault();addAnyCard(blankMenuPosition||{x:48,y:48});return;}if(key==='x'){e.preventDefault();untapLocal();return;}const found=findLocalCard(hoveredCardId);if(!found){if(key==='u'||key==='i'){e.preventDefault();createCounterMarker(key==='u'?'+1/+1':'-1/-1',blankMenuPosition||{x:48,y:48});}return;}const {card,zone}=found;if(e.code==='Space'){e.preventDefault();toggleHovered('tap');}else if(key==='z'){e.preventDefault();toggleHovered('sick');}else if(key==='f'){e.preventDefault();toggleHovered('flip');}else if(key==='u'){e.preventDefault();toggleHovered('counter+',true);}else if(key==='i'){e.preventDefault();toggleHovered('counter-',true);}else if(key==='k'){e.preventDefault();cloneCard(card,zone);}else if(key==='backspace'){e.preventDefault();deleteCard(card.id,zone);}else if(key==='h'||key==='d'||key==='s'||key==='b'){e.preventDefault();moveCard(card.id,zone,({h:'hand',d:'graveyard',s:'exile',b:'reserve'})[key]);}else if(key==='t'||key==='y'){e.preventDefault();moveToLibrary(card.id,zone,key==='t'?'top':'bottom');}});
     for(const [id,menu] of [['actions-toggle','actions-menu'],['create-toggle','create-menu']])$('#'+id).onclick=e=>{e.stopPropagation();$('#'+menu).classList.toggle('open');};document.addEventListener('click',e=>{if(!e.target.closest('.action-menu'))$$('.menu-pop').forEach(m=>m.classList.remove('open'));});
     $('#send').onclick=sendChat;$('#chat-message').onkeydown=e=>{if(e.key==='Enter')sendChat();};$('#collapse-log').onclick=()=>{$('#action-log').classList.toggle('collapsed');document.querySelector('.game-shell').classList.toggle('log-collapsed');};$('#log-open').onclick=()=>$('#action-log').classList.toggle('open');
-    $('#zoom-in').onclick=()=>zoomMat(.1);$('#zoom-out').onclick=()=>zoomMat(-.1);$('#view-reset').onclick=fitTableView;window.addEventListener('resize',fitTableView);$('#life-reset').title='Remettre vos points de vie au total de départ';$$('.close-card').forEach(b=>b.onclick=()=>$('#card-dialog').close());$('#card-dialog').addEventListener('click',e=>{if(e.target===$('#card-dialog'))$('#card-dialog').close();});
+    $('#zoom-in').onclick=()=>zoomMat(.1);$('#zoom-out').onclick=()=>zoomMat(-.1);$('#view-reset').onclick=fitTableView;window.addEventListener('resize',()=>{fitTableView();renderOtherMats();});$('#life-reset').title='Remettre vos points de vie au total de départ';$$('.close-card').forEach(b=>b.onclick=()=>$('#card-dialog').close());$('#card-dialog').addEventListener('click',e=>{if(e.target===$('#card-dialog'))$('#card-dialog').close();});
     $('#playmat').addEventListener('contextmenu',e=>{if(e.defaultPrevented||e.target.closest('.magic-card,button,input,select,a,.zone:not(.battlefield),.game-actions'))return;e.preventDefault();showPlaymatMenu(e);});document.addEventListener('click',e=>{if(!e.target.closest('.card-menu'))$$('.card-menu').forEach(menu=>menu.remove());});document.addEventListener('mouseover',e=>{const el=e.target.closest?.('.magic-card');if(el)hoveredCardId=el.dataset.cardId;});$('#copy-top-card').onclick=()=>{const found=findLocalCard(hoveredCardId);if(!found){toast('Survolez une de vos cartes pour la copier.');return;}cloneCard(found.card,'battlefield');};
     setupDrops();
   }

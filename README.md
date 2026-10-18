@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open the printed URL in two browser tabs. In the first tab, click **New room**, choose Standard or Commander, and copy the invite link. Open it in the second tab, load a deck in each tab, and click **Ready up** in both. The room shares its format with the joining player. Standard starts at 20 life; Commander starts at 40 and moves the first card in the imported list into the Command Zone. For local testing both clients can share the same browser `localStorage`; the app independently shuffles each loaded deck when entering a room.
+Open the printed URL in two browser tabs. In the first tab, click **New room**, choose Standard or Commander, and copy the invite link. Open it in the second tab, load a deck in each tab, and click **Ready up** in both. Rooms support up to four players and share the chosen format and starting life total: Standard starts everyone at 20 life; Commander starts everyone at 40 and moves the first card in the imported list into the Command Zone. The board seats follow join order: first at upper left, second below, third to the right of the first, fourth below the third. Drag cards anywhere on your own board; each player's board color affects its felt, frame, and life panel. For local testing both clients can share the same browser `localStorage`; the app independently shuffles each loaded deck when entering a room.
 
 Deck import accepts one card per line (`Lightning Bolt`) or quantities (`4x Lightning Bolt`, `4 x Lightning Bolt`, or `4 Lightning Bolt`). A 60-card list is recommended for Standard and 100 cards for Commander. Card names are looked up through Scryfall; unmatched names are shown in the import review UI. For Commander, the first parsed card is the commander even when the export does not label a Commander section; one copy is removed from the library.
 
@@ -35,7 +35,7 @@ Commit and push the `config.js` change to redeploy GitHub Pages. For local devel
 
 ## Playing
 
-- Both players ready to start. The initial active player is chosen deterministically from the seat join time.
+- All joined players ready to start (two to four players). The initial active player is chosen deterministically from the seat join time.
 - Play a creature or permanent by clicking it in your hand. Click an instant or sorcery to put it on the shared stack, then use **Pass** to resolve the LIFO stack when both players pass.
 - Turn phases are Untap, Upkeep, Main 1, Combat, Main 2, and End. Pass priority twice to advance. A card is drawn at the beginning of later turns.
 - In Combat, the active player clicks their creatures to declare attackers, then finishes attackers. The defending player clicks untapped creatures to assign blockers and finishes blockers. Combat damage is simultaneous; lethal creatures go to their owners' graveyards and unblocked damage reduces life.

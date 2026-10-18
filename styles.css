@@ -232,6 +232,12 @@
 .player-mat{width:min(calc(100vw - 64px),1400px);height:min(calc(100dvh - 115px),850px)}
 @media(max-width:650px){.table-world{left:0;top:0}.player-mat{width:calc(100vw - 32px);height:calc(100dvh - 95px);min-width:300px}}
 .player-mat{--board-card-width:76px;--board-card-height:107px}
+.player-mat{border-color:color-mix(in srgb,var(--player-color) 68%,#27372f);background:radial-gradient(#d7e6dc20 .75px,transparent .8px) 0 0/17px 17px,radial-gradient(ellipse at 48% 42%,color-mix(in srgb,var(--player-color) 28%,#123b28) 0,color-mix(in srgb,var(--player-color) 15%,#0d2d1d) 58%,#092316 100%)}
+.player-mat .player-hud,.player-mat .seat-hud{border-color:color-mix(in srgb,var(--player-color) 68%,#26352d)}
+.player-mat .player-hud input{color:color-mix(in srgb,var(--player-color) 78%,#effff4)}
+.player-mat .life-row span,.player-mat .seat-hud strong{color:color-mix(in srgb,var(--player-color) 76%,#ffffff)}
+.player-mat .board-cards{left:0;right:0;top:0;bottom:0;display:block;overflow:visible;padding:0}
+.player-mat .board-cards>.magic-card{position:absolute;margin:0}
 .player-mat .board-cards>.magic-card{width:var(--board-card-width);height:var(--board-card-height)}
 .player-mat .piles{right:12px;top:12px;bottom:auto;width:var(--board-card-width);height:auto;gap:9px}
 .player-mat .deck-pile,.player-mat .mini-zone{width:var(--board-card-width);height:var(--board-card-height);min-height:0;flex:0 0 var(--board-card-height);padding:4px;gap:4px}

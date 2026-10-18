@@ -250,4 +250,5 @@
 .own-mat{z-index:2}
 .deck-pile{cursor:pointer;transition:border-color .15s,background-color .15s,box-shadow .15s}
 .deck-pile:hover{border-color:#79b7ff;box-shadow:0 0 0 2px #4385f555,0 0 16px #4385f533}
+.deck-pile:focus-visible{outline:2px solid #79b7ff;outline-offset:2px}
 @media(max-width:650px){.player-mat{--board-card-width:58px;--board-card-height:82px}.player-mat .piles{right:8px;top:8px;gap:5px}.player-mat .deck-pile,.player-mat .mini-zone{padding:3px;gap:3px}}

@@ -280,3 +280,19 @@
 .zone-request-actions{display:flex;gap:7px;flex:none}.zone-request-actions button{padding:8px 10px;font-size:11px}
 .zone-view-card small{display:block;margin-top:3px;color:#87b6ff;font-size:9px}
 @media(max-width:650px){.seat-zone-open b,.seat-zone-count b{font-size:15px}.zone-request-row{align-items:flex-start;flex-direction:column}.zone-request-actions{width:100%}.zone-request-actions button{flex:1}}
+/* Hand cards keep the familiar MTG card ratio; this variable only affects the hand. */
+.hand-cards .magic-card{width:var(--hand-card-width,145px);height:auto;aspect-ratio:63/88;flex:0 0 var(--hand-card-width,145px)}
+.settings-content input[type=range]{width:100%;padding:0;accent-color:#4385f5;cursor:pointer}
+.settings-content .field-label span{float:right;color:#9ab7ed;font-weight:500;letter-spacing:0}
+.remote-commander-zone{display:none}
+.remote-commander-zone:has(.magic-card){display:block;left:12px;top:145px;width:96px;height:136px;padding:5px;z-index:5}
+.remote-commander-zone .zone-label{font-size:6px;color:#e2c17e}
+.remote-commander-zone .card-row{position:absolute;left:6px;right:6px;top:23px;bottom:6px;display:flex;align-items:flex-start;gap:5px;overflow:hidden}
+.remote-commander-zone .magic-card{width:70px;height:98px;flex:0 0 70px}
+@media(max-width:650px){
+  .hand-zone{height:min(36vh,260px)}
+  .remote-commander-zone:has(.magic-card){left:8px;top:103px;width:72px;height:102px;padding:4px}
+  .remote-commander-zone .zone-label{font-size:6px}
+  .remote-commander-zone .card-row{left:4px;right:4px;top:18px;bottom:4px}
+  .remote-commander-zone .magic-card{width:52px;height:73px;flex-basis:52px}
+}

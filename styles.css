@@ -296,3 +296,5 @@
   .remote-commander-zone .card-row{left:4px;right:4px;top:18px;bottom:4px}
   .remote-commander-zone .magic-card{width:52px;height:73px;flex-basis:52px}
 }
+/* Commander tax stays separate from the number of cards in the command zone. */
+.commander-tax{position:absolute;z-index:4;top:3px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:2px 5px;border:1px solid #f3ca78;border-radius:999px;background:#281d0beF;color:#ffe29c;font-size:9px;font-weight:800;line-height:1.2;box-shadow:0 2px 6px #000b;pointer-events:none}

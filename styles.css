@@ -246,4 +246,8 @@
 .player-mat .piles>.mini-zone .pile-button{z-index:2;background:transparent}
 .player-mat .piles>.mini-zone[data-zone="graveyard"] .pile-button{background:linear-gradient(#69272b75,#69272b75)}
 .player-mat .piles>.mini-zone[data-zone="exile"] .pile-button{background:linear-gradient(#352b7775,#352b7775)}
+.player-mat{overflow:visible}
+.own-mat{z-index:2}
+.deck-pile{cursor:pointer;transition:border-color .15s,background-color .15s,box-shadow .15s}
+.deck-pile:hover{border-color:#79b7ff;box-shadow:0 0 0 2px #4385f555,0 0 16px #4385f533}
 @media(max-width:650px){.player-mat{--board-card-width:58px;--board-card-height:82px}.player-mat .piles{right:8px;top:8px;gap:5px}.player-mat .deck-pile,.player-mat .mini-zone{padding:3px;gap:3px}}

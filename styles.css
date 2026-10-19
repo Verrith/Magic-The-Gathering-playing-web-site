@@ -145,20 +145,15 @@
 .keyword-counter-menu summary::-webkit-details-marker{display:none}
 .keyword-counter-menu[open] summary{background:#202e44;border-radius:6px 6px 0 0}
 .keyword-counter-menu summary b{color:#9aa9c3;font-weight:400}
-.keyword-counter-grid{position:absolute;left:calc(100% + 5px);top:0;width:min(440px,calc(100vw - 215px));display:grid;grid-template-columns:repeat(6,1fr);gap:7px;padding:12px;background:#111827;border:1px solid #3a4659;border-radius:10px;box-shadow:0 10px 30px #000a}
+.keyword-counter-grid{position:absolute;left:calc(100% + 5px);top:0;width:min(440px,calc(100vw - 215px));display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;padding:12px;background:#111827;border:1px solid #3a4659;border-radius:10px;box-shadow:0 10px 30px #000a}
 .keyword-left .keyword-counter-grid{left:auto;right:calc(100% + 5px)}
-.keyword-counter-grid button{aspect-ratio:1;border:0;border-radius:50%;background:#e6e7e8;color:#101319;display:grid;place-items:center;position:relative;font-size:20px;width:100%}
-.keyword-counter-grid button:nth-child(3n){background:#ffe7a6}.keyword-counter-grid button:nth-child(4n){background:#f29a82}
+.keyword-counter-grid button{aspect-ratio:1;border:0;border-radius:50%;background:transparent;color:#101319;display:grid;place-items:center;position:relative;padding:0;width:100%;cursor:grab}.keyword-counter-grid button img{display:block;width:100%;height:100%;object-fit:contain;border-radius:50%;pointer-events:none}.keyword-counter-grid button:active{cursor:grabbing}
+
 .keyword-counter-grid button small{position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);opacity:0;pointer-events:none;z-index:2;padding:3px 5px;background:#080d17;color:#fff;border-radius:4px;white-space:nowrap;font-size:8px}
 .keyword-counter-grid button:hover small{opacity:1}
-.counter-marker{width:96px!important;height:64px!important;flex-basis:96px!important;border:1px solid #b5c8ff!important;border-radius:10px!important;background:#17233cee!important;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:grab}
-.counter-marker:hover{transform:scale(1.04)!important}
-.player-mat .board-cards>.counter-marker{width:68px!important;height:48px!important;flex-basis:68px!important;transform:translate(-50%,-50%)}
-.player-mat .board-cards>.counter-marker:hover{transform:translate(-50%,-54%)!important}
-.counter-marker-symbol{font-size:15px;font-weight:800;line-height:1.1;text-align:center}
-.counter-marker>small{font-size:6px;color:#aebada;letter-spacing:.06em}
+.counter-marker{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;flex-basis:48px!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;display:block!important;overflow:visible!important;cursor:grab;z-index:8}.counter-marker:hover{transform:scale(1.08)!important}.player-mat .board-cards>.counter-marker{width:48px!important;height:48px!important;flex-basis:48px!important;transform:translate(-50%,-50%)}.player-mat .board-cards>.counter-marker:hover{transform:translate(-50%,-50%) scale(1.08)!important}.counter-marker-image{display:block;width:100%;height:100%;object-fit:contain;border-radius:50%;pointer-events:none}.counter-marker-values{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);padding:1px 4px;border-radius:8px;background:#111d;color:#fff;font-size:9px;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px #000}
 .card-keyword-counter{display:block;left:3px;right:auto;top:auto;bottom:3px;max-width:calc(100% - 6px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:650px){.keyword-counter-grid,.keyword-left .keyword-counter-grid{left:0;right:auto;top:calc(100% + 5px);width:min(440px,calc(100vw - 24px));grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:8px}.aura-board-menu{max-height:calc(100dvh - 10px)}}
+@media(max-width:650px){.keyword-counter-grid,.keyword-left .keyword-counter-grid{left:0;right:auto;top:calc(100% + 5px);width:min(440px,calc(100vw - 24px));grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;padding:8px}.aura-board-menu{max-height:calc(100dvh - 10px)}}
 .magic-card.summoning-sick{outline:1px solid #8195d3}
 
 /* Player identity is shared through Yjs Awareness; these styles work on static GitHub Pages too. */
@@ -304,12 +299,3 @@
 .deck-pile .library-open-overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}
 .deck-pile>span,.deck-pile>strong{position:relative;z-index:2;pointer-events:none}
 .deck-pile #draw-pile{position:relative;z-index:3}
-/* Each counter is its own draggable pill, anchored to the card. */
-.magic-card .card-counter-pills{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
-.magic-card .counter-pill{position:absolute;transform:translate(-50%,-50%);display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;min-width:0;min-height:0;padding:2px;border:2px solid #f2ffe8;border-radius:50%;background:radial-gradient(circle at 32% 25%,#d9edc5,#98ba79);color:#1b311a;font-size:9px;font-weight:900;line-height:1;white-space:nowrap;box-shadow:0 2px 6px #000a;pointer-events:auto;touch-action:none;user-select:none;cursor:grab}
-.magic-card .counter-pill:active{cursor:grabbing;z-index:9}
-.magic-card .counter-pill.minus-counter-pill{border-color:#ffe4e2;background:radial-gradient(circle at 32% 25%,#f4c5c1,#d68884);color:#471d22}
-.magic-card .counter-pill.mixed-counter-pill{border-color:#fff1c4;background:radial-gradient(circle at 32% 25%,#fff0bf,#e6bb5c);color:#463716}
-.counter-pill-menu{min-width:165px}
-.counter-pill-menu button{font-size:12px}
-@media(max-width:650px){.magic-card .counter-pill{width:36px;height:36px;padding:1px;font-size:7px}}

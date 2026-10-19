@@ -306,10 +306,10 @@
 .deck-pile #draw-pile{position:relative;z-index:3}
 /* Each counter is its own draggable pill, anchored to the card. */
 .magic-card .card-counter-pills{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
-.magic-card .counter-pill{position:absolute;transform:translate(-50%,-50%);display:inline-flex;align-items:center;justify-content:center;min-width:38px;min-height:17px;padding:2px 6px;border:1px solid #f2ffe8;border-radius:999px;background:#d9edc5;color:#1b311a;font-size:8px;font-weight:900;line-height:1;white-space:nowrap;box-shadow:0 2px 6px #000a;pointer-events:auto;touch-action:none;user-select:none;cursor:grab}
+.magic-card .counter-pill{position:absolute;transform:translate(-50%,-50%);display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;min-width:0;min-height:0;padding:2px;border:2px solid #f2ffe8;border-radius:50%;background:radial-gradient(circle at 32% 25%,#d9edc5,#98ba79);color:#1b311a;font-size:9px;font-weight:900;line-height:1;white-space:nowrap;box-shadow:0 2px 6px #000a;pointer-events:auto;touch-action:none;user-select:none;cursor:grab}
 .magic-card .counter-pill:active{cursor:grabbing;z-index:9}
-.magic-card .counter-pill.minus-counter-pill{border-color:#ffe4e2;background:#f4c5c1;color:#471d22}
-.magic-card .counter-pill-overflow{background:#20252c;border-color:#d5dce6;color:#fff}
+.magic-card .counter-pill.minus-counter-pill{border-color:#ffe4e2;background:radial-gradient(circle at 32% 25%,#f4c5c1,#d68884);color:#471d22}
+.magic-card .counter-pill.mixed-counter-pill{border-color:#fff1c4;background:radial-gradient(circle at 32% 25%,#fff0bf,#e6bb5c);color:#463716}
 .counter-pill-menu{min-width:165px}
 .counter-pill-menu button{font-size:12px}
-@media(max-width:650px){.magic-card .counter-pill{min-width:30px;min-height:14px;padding:2px 4px;font-size:7px}}
+@media(max-width:650px){.magic-card .counter-pill{width:36px;height:36px;padding:1px;font-size:7px}}

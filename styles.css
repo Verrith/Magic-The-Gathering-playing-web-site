@@ -304,3 +304,13 @@
 .deck-pile .library-open-overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}
 .deck-pile>span,.deck-pile>strong{position:relative;z-index:2;pointer-events:none}
 .deck-pile #draw-pile{position:relative;z-index:3}
+/* Counter tokens use compact round markers like Aura; card badges name the counter type. */
+.counter-marker{width:56px!important;height:56px!important;flex-basis:56px!important;border:2px solid #d7e6c0!important;border-radius:50%!important;background:radial-gradient(circle at 32% 25%,#64765d,#26382c 70%)!important;color:#f3ffe9!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 3px 10px #0009;cursor:grab}
+.counter-marker-symbol{max-width:90%;font-size:11px!important;font-weight:900!important;line-height:1.05!important;text-align:center;text-shadow:0 1px 3px #0009}
+.counter-marker>small{font-size:5px!important;letter-spacing:.04em}
+.counter-marker[data-counter-kind="-1/-1"]{border-color:#f1aaa6!important;background:radial-gradient(circle at 32% 25%,#9e5b58,#492b32 70%)!important}
+.magic-card .card-plus-counter{border-radius:999px;background:#e7f1db;border:1px solid #fff;color:#24351e;font-size:9px;font-weight:900;line-height:1;padding:3px 7px;box-shadow:0 2px 7px #0009}
+.player-mat .board-cards>.counter-marker{width:38px!important;height:38px!important;flex-basis:38px!important}
+.player-mat .board-cards>.counter-marker .counter-marker-symbol{font-size:8px!important}
+.player-mat .board-cards>.counter-marker>small{font-size:4px!important}
+@media(max-width:650px){.counter-marker{width:46px!important;height:46px!important;flex-basis:46px!important}.counter-marker-symbol{font-size:9px!important}.magic-card .card-plus-counter{font-size:8px;padding:2px 5px}}

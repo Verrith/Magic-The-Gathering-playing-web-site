@@ -9,7 +9,9 @@ import './config.js';
   const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v3', PLAYER_SESSIONS='mtg-table-player-sessions-v1', PLAYER_TAB='mtg-table-player-tab-v1', ACTIONS_POSITION='mtg-table-actions-position-v1';
   const MAX_ROOM_PLAYERS=4;
   const COUNTER_ICONS={'+1/+1':'plus-one','-1/-1':'minus-one','Loyalty':'loyalty','Charge':'charge','Poison':'poison','Lore':'lore','Shield':'shield','Stun':'stun','Flying':'flying','Deathtouch':'deathtouch','First strike':'first-strike','Vigilance':'vigilance','Trample':'trample','Lifelink':'lifelink'};
-  const counterIconUrl=kind=>`${import.meta.env.BASE_URL}counter-icons/${COUNTER_ICONS[kind]||'charge'}.svg`;
+  // Vite provides BASE_URL in the built app; the Pages root also serves app.js directly.
+  const appBaseUrl=typeof import.meta.env==='object'?import.meta.env.BASE_URL:new URL('.',import.meta.url).pathname;
+  const counterIconUrl=kind=>`${appBaseUrl}counter-icons/${COUNTER_ICONS[kind]||'charge'}.svg`;
   let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,sharedRequests=null,importRows=[],toastTimer,lastScryfallRequest=0,viewerZone='library',viewerOwnerId=null,viewerAccessRequestId=null,libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false,consumedLifePress=null;
   const processedZoneRequests=new Set();
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];

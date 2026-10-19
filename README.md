@@ -93,3 +93,7 @@ No database, environment variables, cookies, or authentication are used by the P
 ## Existing table tools
 
 Deck import review, local deck storage, commander/reserve zones, card details, counters, tokens, dice, playmat pan/zoom, and card context actions from the original table remain available. Local decks are stored in browser `localStorage`; only the live room state is transient.
+
+## Keyword counter icons
+
+The ability symbols are bundled as SVGs from [Mana by Andrew Gioia](https://github.com/andrewgioia/mana). The palette follows the 20 labels in the reference image. Mana has no dedicated Enchant or Equip symbols, so those use its generic static/activated ability symbols; it also has no Protection or Scry symbols, so those use the shield-counter and Surveil icons as visual stand-ins. The separate `+1/+1` and `-1/-1` markers use Mana's counter symbols. See `counter-icons/ATTRIBUTION.txt` for details.

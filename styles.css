@@ -304,3 +304,15 @@
 .deck-pile .library-open-overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}
 .deck-pile>span,.deck-pile>strong{position:relative;z-index:2;pointer-events:none}
 .deck-pile #draw-pile{position:relative;z-index:3}
+/* Counter icons are image assets so the same symbols appear in menus, on tokens and on cards. */
+.keyword-counter-grid button{background:transparent!important;padding:0;overflow:visible;cursor:grab}
+.keyword-counter-grid button>img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px #0009);pointer-events:none}
+.keyword-counter-grid button:active{cursor:grabbing}
+.counter-marker{overflow:hidden}
+.counter-marker-image{width:30px;height:30px;object-fit:contain;pointer-events:none}
+.counter-marker-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;font-weight:700;pointer-events:none}
+.card-counter-stack{position:absolute;z-index:5;top:3px;right:3px;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none}
+.magic-card .card-counter{position:static;display:inline-flex;align-items:center;gap:3px;min-height:18px;padding:2px 4px;border:1px solid #ffffff75;border-radius:999px;background:#111d;color:#fff;font-size:9px;font-weight:800;line-height:1;box-shadow:0 1px 5px #000b}
+.card-counter img{width:14px;height:14px;object-fit:contain}
+.card-counter b{font-size:9px}
+@media(max-width:650px){.counter-marker-image{width:24px;height:24px}.counter-marker-name{font-size:7px}.magic-card .card-counter{min-height:15px;padding:1px 3px;gap:2px}.card-counter img{width:11px;height:11px}.card-counter b{font-size:8px}}

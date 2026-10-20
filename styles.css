@@ -383,3 +383,6 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 .hand-card-track{display:flex;width:max-content;min-width:100%;height:100%;align-items:flex-start;justify-content:center;gap:8px;transition:transform .12s ease;will-change:transform}
 .hand-cards.is-overflowing .hand-card-track{justify-content:flex-start}
 @media(max-width:650px){.hand-cards{padding-top:19px}.hand-card-track{gap:4px;transition:none}}
+
+/* Keep the hand row inside its tray horizontally while preserving vertical hover lift. */
+.hand-cards{overflow-x:clip!important;overflow-y:visible!important}

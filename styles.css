@@ -300,3 +300,5 @@
 .deck-pile .library-open-overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}
 .deck-pile>span,.deck-pile>strong{position:relative;z-index:2;pointer-events:none}
 .deck-pile #draw-pile{position:relative;z-index:3}
+
+.pt-counter-label{display:grid;place-items:center;width:100%;height:100%;color:#101319;font-size:12px;font-weight:900;letter-spacing:-.06em;white-space:nowrap}.counter-marker-label{position:absolute;inset:0;display:grid;place-items:center;color:#101319;font-size:12px;font-weight:900;letter-spacing:-.06em;white-space:nowrap}.counter-marker:has(.counter-marker-label){background:#f4f4f0!important}

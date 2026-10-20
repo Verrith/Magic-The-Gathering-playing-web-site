@@ -350,11 +350,23 @@
 .token-picker-menu{width:260px;max-height:min(70vh,520px);overflow:auto;display:flex;flex-direction:column;gap:3px}.token-picker-title{padding:8px 10px;color:#aab8cb;font-size:10px;letter-spacing:.14em}.token-picker-menu .token-picker-option{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:9px;min-height:48px;text-align:left}.token-picker-option img,.token-picker-placeholder{width:36px;height:46px;border-radius:4px;object-fit:cover;background:#1a2536}.token-picker-placeholder{display:grid;place-items:center}.token-picker-option>span:nth-child(2){white-space:normal}.token-picker-option small{color:#aab8cb}
 
 /* Compact format chooser shown at the clean, room-less URL. */
-dialog.room-format-modal{width:min(440px,calc(100vw - 24px));height:auto;max-height:calc(100dvh - 24px);border-radius:14px}
-dialog.room-format-modal .modal-head{padding:20px 22px 10px}
-dialog.room-format-modal .settings-content{padding:4px 22px 14px;overflow:visible}
-dialog.room-format-modal .format-option{margin:8px 0;padding:13px}
-dialog.room-format-modal .modal-actions{padding:12px 22px}
+dialog.room-format-modal{width:min(480px,calc(100vw - 24px));height:fit-content!important;min-height:0!important;max-height:calc(100dvh - 24px);padding:0;overflow:hidden;display:flex;flex:none;flex-direction:column;border:1px solid #414653;border-radius:18px;background:radial-gradient(ellipse at 12% 0%,#24334b 0,transparent 42%),#17191f;box-shadow:0 30px 100px #000d,0 0 55px #4385f51a}
+dialog.room-format-modal .modal-head{flex:none;padding:23px 24px 16px}
+dialog.room-format-modal .modal-head h2{font-size:24px;letter-spacing:-.035em}
+dialog.room-format-modal .modal-head p{max-width:350px;line-height:1.55}
+dialog.room-format-modal .eyebrow{color:#8cb5ff}
+dialog.room-format-modal .settings-content{flex:none!important;min-height:0!important;padding:2px 24px 20px;overflow:visible}
+dialog.room-format-modal .format-option{align-items:center;gap:14px;margin:10px 0;padding:16px;border-color:#343944;border-radius:12px;background:#20232b;transition:border-color .16s,background .16s,transform .16s,box-shadow .16s}
+dialog.room-format-modal .format-option:hover{transform:translateY(-1px);border-color:#56647b;background:#242a35}
+dialog.room-format-modal .format-option:has(input:checked){border-color:#5e96fa;background:linear-gradient(110deg,#243650,#202936);box-shadow:inset 0 0 0 1px #5e96fa22,0 8px 22px #0003}
+dialog.room-format-modal .format-option input{width:17px;height:17px;flex:none;margin:0;accent-color:#5792ff}
+dialog.room-format-modal .format-option span{gap:5px}
+dialog.room-format-modal .format-option b{font-size:14px}
+dialog.room-format-modal .format-option small{font-size:11px;line-height:1.45}
+dialog.room-format-modal .modal-actions{flex:none;padding:15px 24px 19px;background:#12141966}
+dialog.room-format-modal .icon-button{width:34px;height:34px;border:1px solid #424752;border-radius:10px;background:#20232a;color:#aeb5c1;font-size:22px;line-height:1;transition:.16s}
+dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
+@media(max-width:520px){dialog.room-format-modal .modal-head{padding:20px 18px 12px}dialog.room-format-modal .settings-content{padding:2px 18px 15px}dialog.room-format-modal .format-option{padding:14px}dialog.room-format-modal .modal-actions{padding:12px 18px 16px}}
 
 /* Give hovered hand cards a reserved lift gutter so their top edge never clips. */
 .hand-zone{height:max(min(36vh,260px),calc(var(--hand-card-width,145px)*1.397 + 42px))}

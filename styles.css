@@ -376,3 +376,10 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 
 /* Let hand cards escape the tray while the inner row still handles horizontal scrolling. */
 .hand-zone{overflow:visible}
+
+/* Keep horizontal hand navigation, but never clip a card that rises on hover. */
+.hand-zone{overflow:visible!important}
+.hand-cards{display:block!important;overflow:visible!important;padding-top:30px}
+.hand-card-track{display:flex;width:max-content;min-width:100%;height:100%;align-items:flex-start;justify-content:center;gap:8px;transition:transform .12s ease;will-change:transform}
+.hand-cards.is-overflowing .hand-card-track{justify-content:flex-start}
+@media(max-width:650px){.hand-cards{padding-top:26px}.hand-card-track{gap:4px;transition:none}}

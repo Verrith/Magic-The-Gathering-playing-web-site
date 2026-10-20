@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./styles.css?v=moxfield-token-menu-20261020-09">
   <!-- Fallback for GitHub Pages deployments that publish the repository root instead of Vite's dist artifact. -->
   <script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-webrtc":"https://esm.sh/y-webrtc@10.2.3?external=yjs"}}</script>
-  <script type="module" src="./app.js?v=moxfield-deck-tokens-20261020-10"></script>
+  <script type="module" src="./app.js?v=archidekt-deck-tokens-20261020-11"></script>
 </head>
 <body>
   <header class="topbar">
@@ -62,7 +62,11 @@
       <div class="join-row"><input id="moxfield-url" type="url" placeholder="https://moxfield.com/decks/…"><button class="primary" id="moxfield-import" type="button">Importer le deck</button></div>
       <p class="muted small">Colle le lien d’un deck public : sa liste sera importée automatiquement, avec les images Moxfield.</p>
     </div>
-    <div class="import-panel hidden" id="panel-archidekt"><p class="notice">L’import direct Archidekt n’est pas intégré dans cette version. Exportez votre deck en texte et collez-le dans l’onglet Liste TXT.</p></div>
+    <div class="import-panel hidden" id="panel-archidekt">
+      <label class="field-label" for="archidekt-url">LIEN DU DECK ARCHIDEKT</label>
+      <div class="join-row"><input id="archidekt-url" type="url" placeholder="https://archidekt.com/decks/…"><button class="primary" id="archidekt-import" type="button">Importer le deck</button></div>
+      <p class="muted small">Colle le lien d’un deck public. Les jetons de la section Tokens &amp; Extras seront disponibles dans le menu de création.</p>
+    </div>
     <div id="import-error" class="error-message hidden"></div><div id="preview" class="preview hidden"></div>
     <div class="modal-actions"><span id="import-status" class="muted small"></span><button class="secondary hidden" id="back-edit">Modifier la liste</button><button class="primary" id="preview-btn">Analyser la liste</button><button class="primary hidden" id="confirm-import">Ajouter à la bibliothèque</button></div>
   </dialog>

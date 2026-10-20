@@ -407,7 +407,7 @@ import './config.js';
   function zoneName(z){return ({hand:'votre main',battlefield:'le champ de bataille',graveyard:'le cimetière',exile:'l’exil',reserve:'la réserve',commandZone:'la zone de commandant',library:'la bibliothèque'})[z]||z;}
   function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}function escAttr(s=''){return esc(s);}
   function openImport(){resetImporter();$('#import-dialog').showModal();}
-  function resetImporter(){$('#deck-text').value='';$('#deck-name').value='';$('#moxfield-url').value='';$('#preview').classList.add('hidden');$('#preview-btn').classList.remove('hidden');$('#confirm-import').classList.add('hidden');$('#back-edit').classList.add('hidden');$('#import-error').classList.add('hidden');$('#import-status').textContent='';importRows=[];}
+  function resetImporter(){$('#deck-text').value='';$('#deck-name').value='';$('#moxfield-url').value='';$('#archidekt-url').value='';$('#preview').classList.add('hidden');$('#preview-btn').classList.remove('hidden');$('#confirm-import').classList.add('hidden');$('#back-edit').classList.add('hidden');$('#import-error').classList.add('hidden');$('#import-status').textContent='';importRows=[];}
   async function analyze(){
     const input=$('#deck-text').value;importRows=parseDeck(input);if(!importRows.length){showError('Aucune ligne de carte reconnue. Utilisez « quantité Nom de carte », par exemple « 1 Sol Ring ».');return;}
     $('#preview-btn').disabled=true;$('#import-error').classList.add('hidden');$('#import-status').textContent='Recherche des cartes sur Scryfall…';$('#preview').classList.remove('hidden');
@@ -420,7 +420,7 @@ import './config.js';
   function extractMoxfieldId(value){const url=validMoxfieldUrl(value);return url?.pathname.match(/^\/decks\/([\w-]+)/)?.[1]||null;}
   function moxfieldCardRow(card,entryId,quantity,section){const name=card.name||'Jeton';const faces=(card.card_faces||[]).map((face,index)=>({name:face.name||name,image:scryfallPrintImage(card.scryfall_id,index===1?'back':'front')||`https://assets.moxfield.net/cards/card-${encodeURIComponent(face.uniqueCardId||face.id||card.uniqueCardId||entryId)}-normal.webp`,oracle:face.oracle_text||'',type:face.type_line||'',manaCost:face.mana_cost||'',power:face.power||'',toughness:face.toughness||''}));const printId=card.uniqueCardId||entryId||card.id,image=scryfallPrintImage(card.scryfall_id)||faces[0]?.image||(printId?`https://assets.moxfield.net/cards/card-${encodeURIComponent(printId)}-normal.webp`:null);return {name,image,small:image,faces:faces.length>1&&['transform','modal_dfc','reversible_card','double_faced_token','flip'].includes(String(card.layout||'').toLowerCase())?faces:[],oracle:card.oracle_text||faces[0]?.oracle||'',type:card.type_line||card.type||faces[0]?.type||'',manaCost:card.mana_cost||faces[0]?.manaCost||'',power:card.power||faces[0]?.power||'',toughness:card.toughness||faces[0]?.toughness||'',scryfallId:card.scryfall_id||null,set:card.set||'',collectorNumber:card.cn||'',moxfieldPrintId:printId,moxfieldCardId:card.id||entryId||null,printsUri:null,layout:card.layout||'',qty:Math.max(1,Number(quantity)||1),section};}
   function isActualMoxfieldToken(card){const type=String(card?.type_line||card?.typeLine||card?.type||'').toLowerCase(),layout=String(card?.layout||'').toLowerCase();return card?.isToken===true||card?.is_token===true||card?.token===true||type.includes('token')||['token','double_faced_token'].includes(layout);}
-  function isMoxfieldTokenRow(card){return card?.section==='Tokens'&&(card.tokenSource==='moxfield-token-board'||(card.tokenSource==='moxfield-linked-token'&&String(card.type||'').toLowerCase().includes('token')));}
+  function isMoxfieldTokenRow(card){return card?.section==='Tokens'&&(card.tokenSource==='moxfield-token-board'||card.tokenSource==='archidekt-token-board'||(card.tokenSource==='moxfield-linked-token'&&String(card.type||'').toLowerCase().includes('token')));}
   function moxfieldDeckCards(data){
     const rows=[],boards=data.boards||{};
     for(const [boardKey,section] of [['commanders','Commander'],['mainboard','Mainboard'],['companions','Companion'],['sideboard','Sideboard'],['maybeboard','Maybeboard']]){
@@ -495,6 +495,53 @@ import './config.js';
       $('#import-status').textContent='';showError(message);
     }finally{button.disabled=false;}
   }
+  function extractArchidektId(value){try{const url=new URL(value.trim());if(!['archidekt.com','www.archidekt.com'].includes(url.hostname.toLowerCase()))return null;return url.pathname.match(/^\/decks\/(\d+)(?:\/|$)/)?.[1]||null;}catch{return null;}}
+  function archidektCardRow(print,quantity,section){
+    const oracle=print?.oracleCard||{},edition=print?.edition||{},name=oracle.name||print?.displayName;if(!name)return null;
+    const image=scryfallPrintImage(print.uid)||null,type=(oracle.types||[]).join(' ')+(oracle.subTypes?.length?` — ${oracle.subTypes.join(' ')}`:'');
+    return {name,image,small:image,faces:(oracle.faces||[]).map((face,index)=>({name:face.name||name,image:scryfallPrintImage(face.uid)||image,oracle:face.text||'',type:[...(face.types||[]),...(face.subTypes||[])].join(' '),manaCost:face.manaCost||'',power:face.power||'',toughness:face.toughness||''})),oracle:oracle.text||'',type,manaCost:oracle.manaCost||'',power:oracle.power||'',toughness:oracle.toughness||'',scryfallId:print.uid||null,set:edition.editioncode||'',collectorNumber:print.collectorNumber||'',layout:oracle.layout||'',qty:Math.max(1,Number(quantity)||1),section,archidektPrintId:print.id,archidektOracleId:oracle.id,archidektTokenIds:oracle.tokens||[]};
+  }
+  function archidektDeckCards(data,tokenPrints){
+    const rows=[],sourceByOracle=new Map(),tokenByOracle=new Map(),categories=new Map((data.categories||[]).map(category=>[String(category.name).toLowerCase(),category]));
+    for(const entry of data.cards||[]){
+      const names=(entry.categories||[]).map(name=>String(name).toLowerCase());
+      if(names.some(name=>categories.has(name)&&categories.get(name).includedInDeck===false))continue;
+      const section=names.includes('commander')?'Commander':names.includes('companion')||entry.companion?'Companion':names.includes('sideboard')?'Sideboard':'Mainboard';
+      const row=archidektCardRow(entry.card,entry.quantity,section);if(!row)continue;rows.push(row);
+      const list=sourceByOracle.get(String(row.archidektOracleId))||[];list.push(row);sourceByOracle.set(String(row.archidektOracleId),list);
+    }
+    for(const print of tokenPrints||[]){
+      const oracle=print?.oracleCard||{},types=(oracle.types||[]).map(type=>String(type).toLowerCase()),layout=String(oracle.layout||'').toLowerCase();
+      // Archidekt returns Tokens & Extras. Keep actual token cards only; extras
+      // that are ordinary cards must never appear in the token creation menu.
+      if(!oracle.name||(!types.includes('token')&&!['token','double_faced_token'].includes(layout)))continue;
+      const key=String(oracle.id);if(tokenByOracle.has(key))continue;
+      const row=archidektCardRow(print,1,'Tokens');if(!row)continue;row.isToken=true;row.tokenSource='archidekt-token-board';tokenByOracle.set(key,row);
+    }
+    for(const [oracleId,sources] of sourceByOracle){
+      for(const source of sources){
+        const produced=[];for(const tokenId of source.archidektTokenIds||[]){const token=tokenByOracle.get(String(tokenId));if(token&&!produced.some(item=>item.archidektOracleId===token.archidektOracleId))produced.push(token);}
+        if(produced.length)source.producesTokens=produced;
+      }
+    }
+    rows.push(...tokenByOracle.values());return rows;
+  }
+  async function importArchidektDeck(){
+    const deckId=extractArchidektId($('#archidekt-url').value);if(!deckId){showError('Colle un lien Archidekt valide, par exemple https://archidekt.com/decks/123456');return;}
+    const button=$('#archidekt-import');button.disabled=true;$('#import-error').classList.add('hidden');$('#import-status').textContent='Chargement du deck public et de ses jetons…';
+    try{
+      const proxy=String(window.MTG_TABLE_CONFIG?.archidektProxyUrl||'').trim().replace(/\/$/,'');
+      const requestJson=async endpoint=>{const target=`https://archidekt.com/api/decks/${encodeURIComponent(deckId)}/${endpoint}`;const url=proxy?`${proxy}/${encodeURIComponent(deckId)}/${endpoint}`:`https://cors.tools/proxy?url=${encodeURIComponent(target)}`;const response=await fetch(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(30000)});let payload;try{payload=await response.json();}catch{payload=null;}if(!response.ok)throw new Error(typeof payload?.detail==='string'?payload.detail:`Archidekt a répondu HTTP ${response.status}.`);return payload;};
+      const [data,tokenPrints]=await Promise.all([requestJson(''),requestJson('tokens/')]);const cards=archidektDeckCards(data,Array.isArray(tokenPrints)?tokenPrints:[]);
+      if(!cards.some(card=>card.section!=='Tokens'))throw new Error('Aucune carte trouvée. Vérifie que le deck est public et contient une liste.');
+      const sourceUrl=`https://archidekt.com/decks/${deckId}`,existing=state.decks.find(item=>item.sourceUrl===sourceUrl);
+      const deck={id:existing?.id||id(),name:data.name||'Deck Archidekt',format:'Format libre',sourceUrl,cards,createdAt:Date.now()};
+      if(existing)state.decks=state.decks.map(item=>item.id===existing.id?deck:item);else state.decks.unshift(deck);
+      save();renderDecks();$('#import-dialog').close();toast(existing?`${deck.name} actualisé depuis Archidekt`:`${deck.name} importé depuis Archidekt`);
+      if(!state.currentDeck)loadDeck(deck.id);else $('#deck-picker').showModal();
+    }catch(error){const message=error?.name==='TimeoutError'?'Le service Archidekt met trop de temps à répondre. Réessaie dans un instant.':error instanceof TypeError?'Le service de lecture Archidekt est momentanément inaccessible. Réessaie plus tard.':error.message||'Impossible de charger le deck Archidekt.';$('#import-status').textContent='';showError(message);}
+    finally{button.disabled=false;}
+  }
   function drawCards(n=1){if(!state.library.length){toast('Your library is empty.');return;}let drew=0;for(let i=0;i<n&&state.library.length;i++){const c=state.library.shift();c.zone='hand';state.hand.push(c);drew++;}save();render();syncCounts();logAction(`drew ${drew} card${drew===1?'':'s'}`);}
   function askCount(label,max=state.library.length){const raw=prompt(`${label} (1–${max})`,'1');if(raw===null)return 0;const count=Number.parseInt(raw,10);if(!Number.isFinite(count)||count<1){toast('Entre un nombre valide.');return 0;}return Math.min(count,max);}
   function moveTopLibraryCard(destination){const card=state.library.shift();if(!card){toast('Votre bibliothèque est vide.');return;}card.zone=destination;card.tapped=false;card.attacking=false;card.blocking=null;card.blockers=[];if(destination==='battlefield'){card.x=48;card.y=48;}state[destination].push(card);save();render();syncCard(card,destination);syncCounts();logAction(`a déplacé la carte du dessus vers ${zoneName(destination)}`);}
@@ -531,7 +578,7 @@ import './config.js';
     $('#life-total').addEventListener('change',event=>{const value=Number.parseInt(event.target.value,10);if(Number.isInteger(value)&&value>=0)setPlayerLife(localPlayerId,value);else render();});$('#life-total').addEventListener('keydown',event=>{if(event.key==='Enter')event.currentTarget.blur();});bindLifeButton($('#life-up'),localPlayerId,1);bindLifeButton($('#life-down'),localPlayerId,-1);
     $('#open-decks').onclick=()=>$('#deck-picker').showModal();$('#close-decks').onclick=()=>$('#deck-picker').close();$('#new-deck').onclick=()=>{$('#deck-picker').close();openImport();};$('#join-open').onclick=()=>{$('#deck-picker').close();openSettings();};
     $('#deck-file').onchange=async e=>{const f=e.target.files[0];if(f)$('#deck-text').value=await f.text();};$$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===b));$$('.import-panel').forEach(x=>x.classList.add('hidden'));$('#panel-'+b.dataset.tab).classList.remove('hidden');});
-    $('#moxfield-import').onclick=importMoxfieldDeck;$('#moxfield-url').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();importMoxfieldDeck();}};
+    $('#moxfield-import').onclick=importMoxfieldDeck;$('#moxfield-url').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();importMoxfieldDeck();}};$('#archidekt-import').onclick=importArchidektDeck;$('#archidekt-url').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();importArchidektDeck();}};
     $('#preview-btn').onclick=analyze;$('#confirm-import').onclick=finishImport;$('#back-edit').onclick=()=>{$('#preview-btn').classList.remove('hidden');$('#confirm-import').classList.add('hidden');$('#back-edit').classList.add('hidden');$('#preview').classList.add('hidden');$('#import-status').textContent='';};
     $('#draw').onclick=()=>drawCards();const libraryPile=$('.deck-pile');$('#library-open').addEventListener('click',openSearchDeck);$('#draw-pile').addEventListener('click',e=>{e.stopPropagation();drawCards();});libraryPile.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();showLibraryMenu(e);});$('#graveyard-open').onclick=()=>openSearchZone('graveyard');$('#exile-open').onclick=()=>openSearchZone('exile');for(const zone of ['graveyard','exile'])$(`.mini-zone[data-zone="${zone}"]`).addEventListener('contextmenu',e=>{e.preventDefault();openSearchZone(zone);});$('#library-view-top').onclick=()=>{libraryView='top';renderZoneViewer();};$('#library-view-all').onclick=()=>{libraryView='all';renderZoneViewer();};$('#zone-view-close').onclick=()=>{$('#zone-view-dialog').close();viewerOwnerId=null;viewerAccessRequestId=null;};$('#zone-request-close').onclick=()=>$('#zone-request-dialog').close();$('#shuffle').onclick=()=>{state.library=shuffleArray(state.library);save();render();syncCounts();logAction('a mélangé sa bibliothèque');};
     $('#life-reset').onclick=()=>changeLife(startingLife()-state.life);$('#life-plus-menu').onclick=()=>changeLife(1);$('#life-minus-menu').onclick=()=>changeLife(-1);

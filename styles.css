@@ -348,3 +348,10 @@
 .opponent-hand.revealed img{display:block;width:14px;height:19px;margin-left:-3px;border:1px solid #b9c5bb;border-radius:2px;object-fit:cover;box-shadow:0 1px 3px #0009}
 
 .token-picker-menu{width:260px;max-height:min(70vh,520px);overflow:auto;display:flex;flex-direction:column;gap:3px}.token-picker-title{padding:8px 10px;color:#aab8cb;font-size:10px;letter-spacing:.14em}.token-picker-menu .token-picker-option{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:9px;min-height:48px;text-align:left}.token-picker-option img,.token-picker-placeholder{width:36px;height:46px;border-radius:4px;object-fit:cover;background:#1a2536}.token-picker-placeholder{display:grid;place-items:center}.token-picker-option>span:nth-child(2){white-space:normal}.token-picker-option small{color:#aab8cb}
+
+/* Compact format chooser shown at the clean, room-less URL. */
+dialog.room-format-modal{width:min(440px,calc(100vw - 24px));height:auto;max-height:calc(100dvh - 24px);border-radius:14px}
+dialog.room-format-modal .modal-head{padding:20px 22px 10px}
+dialog.room-format-modal .settings-content{padding:4px 22px 14px;overflow:visible}
+dialog.room-format-modal .format-option{margin:8px 0;padding:13px}
+dialog.room-format-modal .modal-actions{padding:12px 22px}

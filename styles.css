@@ -386,3 +386,5 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 
 /* Keep the hand row inside its tray horizontally while preserving vertical hover lift. */
 .hand-cards{overflow-x:clip!important;overflow-y:visible!important}
+
+.token-picker-empty{padding:12px 10px;color:#9ca3af;font-size:12px;line-height:1.45}

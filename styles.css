@@ -303,3 +303,9 @@
 .deck-pile .library-open-overlay{position:absolute;inset:0;z-index:1;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}
 .deck-pile>span,.deck-pile>strong{position:relative;z-index:2;pointer-events:none}
 .deck-pile #draw-pile{position:relative;z-index:3}
+
+/* Counter markers attached to permanents share the card's position and stacking context. */
+.magic-card.has-attached-marker{overflow:visible!important;z-index:2}
+.board-cards>.magic-card.has-attached-marker:hover,.player-mat .board-cards>.magic-card.has-attached-marker:hover{z-index:20!important}
+.magic-card>.attached-counter-marker{position:absolute!important;left:var(--attached-left,50%);top:var(--attached-top,50%);width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;flex:none!important;margin:0!important;transform:translate(-50%,-50%)!important;z-index:40!important;pointer-events:auto}
+.magic-card>.attached-counter-marker:hover{transform:translate(-50%,-50%) scale(1.08)!important;z-index:41!important}

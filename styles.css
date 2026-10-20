@@ -342,3 +342,5 @@
 .player-mat .seat-exile-pile{border-color:#55479f;background:#201d40aa;color:#b1a8ff}
 .player-mat .seat-zone-art{position:absolute;z-index:-1;inset:0;width:100%;height:100%;object-fit:cover;opacity:.28;pointer-events:none}
 .player-mat .seat-hand-open{border-color:#596575;background:#151d28;color:#d3deed}
+.opponent-hand.revealed i{display:none}
+.opponent-hand.revealed img{display:block;width:14px;height:19px;margin-left:-3px;border:1px solid #b9c5bb;border-radius:2px;object-fit:cover;box-shadow:0 1px 3px #0009}

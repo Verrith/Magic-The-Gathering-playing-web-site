@@ -346,3 +346,4 @@
 .player-mat .seat-hand-open{border-color:#596575;background:#151d28;color:#d3deed}
 .opponent-hand.revealed i{display:none}
 .opponent-hand.revealed img{display:block;width:14px;height:19px;margin-left:-3px;border:1px solid #b9c5bb;border-radius:2px;object-fit:cover;box-shadow:0 1px 3px #0009}
+.token-badge{position:absolute;left:3px;bottom:3px;z-index:4;padding:2px 4px;border:1px solid #f4d58d;border-radius:999px;background:#17130de8;color:#ffe7ae;font-size:6px;font-weight:800;line-height:1;pointer-events:none}

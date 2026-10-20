@@ -369,10 +369,10 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 @media(max-width:520px){dialog.room-format-modal .modal-head{padding:20px 18px 12px}dialog.room-format-modal .settings-content{padding:2px 18px 15px}dialog.room-format-modal .format-option{padding:14px}dialog.room-format-modal .modal-actions{padding:12px 18px 16px}}
 
 /* Give hovered hand cards a reserved lift gutter so their top edge never clips. */
-.hand-zone{height:calc(var(--hand-card-width,145px)*1.397 + 42px)}
-.hand-cards{padding-top:18px}
+.hand-zone{height:calc(var(--hand-card-width,145px)*1.397 + 54px)}
+.hand-cards{padding-top:30px}
 .hand-cards{position:relative;z-index:7}.hand-cards .magic-card{position:relative;z-index:1;box-shadow:0 8px 18px #000b,0 0 0 1px #77877b}.hand-cards .magic-card:hover{transform:translateY(-14px) scale(1.035);transform-origin:center bottom;z-index:20;box-shadow:0 14px 28px #000d,0 0 0 1px #8da997}
-@media(max-width:650px){.hand-zone{height:calc(var(--hand-card-width,108px)*1.397 + 40px)}.hand-cards{padding-top:16px}.hand-cards .magic-card:hover{transform:translateY(-12px) scale(1.025)}}
+@media(max-width:650px){.hand-zone{height:calc(var(--hand-card-width,108px)*1.397 + 50px)}.hand-cards{padding-top:26px}.hand-cards .magic-card:hover{transform:translateY(-12px) scale(1.025)}}
 
 /* Let hand cards escape the tray while the inner row still handles horizontal scrolling. */
 .hand-zone{overflow:visible}

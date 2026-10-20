@@ -313,3 +313,11 @@
 /* Keep every draggable counter icon round, matching the markers placed on the playmat. */
 .aura-board-menu .keyword-counter-grid button,.aura-board-menu .pt-counter-controls button{aspect-ratio:1/1;border-radius:50%!important;box-shadow:0 2px 5px #0008;transition:transform .12s,box-shadow .12s}
 .aura-board-menu .keyword-counter-grid button:hover,.aura-board-menu .pt-counter-controls button:hover{transform:scale(1.06);box-shadow:0 4px 10px #000a}
+
+/* Card context menu follows Aura's compact, keyboard-hinted layout. */
+.aura-card-menu{width:178px;min-width:178px;padding:5px;border:1px solid #28354d;border-radius:11px;background:#101a2d;box-shadow:0 12px 32px #0009}
+.aura-card-menu button{min-height:39px;padding:8px 10px;border-radius:5px;background:transparent;font-size:14px;font-weight:400}
+.aura-card-menu button:hover{background:#1d2a40}
+.aura-card-menu button.danger{color:#ff525c}
+.aura-card-menu button.danger kbd{color:#94a3b8}
+.aura-card-menu hr{border-top-color:#2c394e;margin:4px 0}

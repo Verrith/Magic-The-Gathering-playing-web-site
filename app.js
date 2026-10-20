@@ -199,7 +199,7 @@ import './config.js';
     // Render attached counters as children of their permanent. This makes their position and stacking order follow the card.
     for(const marker of allCards){if(!marker.counterMarker||!marker.attachedTo)continue;const parent=elements.get(marker.attachedTo);if(!parent)continue;parent.classList.add('has-attached-marker');parent.append(makeCard(marker,'battlefield'));}
   }
-  function updateHandZoneLayout(){const zone=$('.hand-zone'),cards=$('#hand-cards'),stage=$('.game-stage');if(!zone||!cards||!stage)return;const count=state.hand.length,size=Math.max(90,Math.min(200,Number(state.handCardSize)||145)),gap=8,padding=20,maxWidth=Math.max(0,Math.min(stage.clientWidth-24,innerWidth*.94,1400)),desired=count?count*size+Math.max(0,count-1)*gap+padding:0,width=Math.min(maxWidth,desired);zone.style.width=`${width}px`;cards.classList.toggle('is-overflowing',desired>maxWidth);cards.style.setProperty('--hand-card-width',`${size}px`);}
+  function updateHandZoneLayout(){const zone=$('.hand-zone'),cards=$('#hand-cards'),stage=$('.game-stage');if(!zone||!cards||!stage)return;const count=state.hand.length,size=Math.max(90,Math.min(200,Number(state.handCardSize)||145)),gap=8,padding=20,maxWidth=Math.max(0,Math.min(stage.clientWidth-24,innerWidth*.94,1400)),desired=count?count*size+Math.max(0,count-1)*gap+padding:0,width=Math.min(maxWidth,desired);zone.style.width=`${width}px`;zone.style.setProperty('--hand-card-width',`${size}px`);cards.classList.toggle('is-overflowing',desired>maxWidth);cards.style.setProperty('--hand-card-width',`${size}px`);}
   function renderOtherMats(){
     const host=$('#other-mats'),players=room?.players||[],me=room?.userId,world=$('#table-world'),ownBoard=$('#player-board');
     host.innerHTML='';

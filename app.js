@@ -419,6 +419,7 @@ import './config.js';
   function finishImport(){const valid=importRows.filter(x=>x.card);if(!valid.length){showError('Aucune carte reconnue. Corrigez au moins une carte avant de continuer.');return;}const cards=valid.map(r=>({...r.card,qty:r.qty,section:r.section}));const deck={id:id(),name:$('#deck-name').value.trim()||'Deck sans nom',format:'Format libre',cards,createdAt:Date.now()};state.decks.unshift(deck);save();renderDecks();$('#import-dialog').close();toast(`${deck.name} ajouté à la bibliothèque`);if(!state.currentDeck)loadDeck(deck.id);else $('#deck-picker').showModal();}
   function extractMoxfieldId(value){const url=validMoxfieldUrl(value);return url?.pathname.match(/^\/decks\/([\w-]+)/)?.[1]||null;}
   function moxfieldCardRow(card,entryId,quantity,section){const name=card.name||'Jeton';const faces=(card.card_faces||[]).map((face,index)=>({name:face.name||name,image:scryfallPrintImage(card.scryfall_id,index===1?'back':'front')||`https://assets.moxfield.net/cards/card-${encodeURIComponent(face.uniqueCardId||face.id||card.uniqueCardId||entryId)}-normal.webp`,oracle:face.oracle_text||'',type:face.type_line||'',manaCost:face.mana_cost||'',power:face.power||'',toughness:face.toughness||''}));const printId=card.uniqueCardId||entryId||card.id,image=scryfallPrintImage(card.scryfall_id)||faces[0]?.image||(printId?`https://assets.moxfield.net/cards/card-${encodeURIComponent(printId)}-normal.webp`:null);return {name,image,small:image,faces:faces.length>1&&['transform','modal_dfc','reversible_card','double_faced_token','flip'].includes(String(card.layout||'').toLowerCase())?faces:[],oracle:card.oracle_text||faces[0]?.oracle||'',type:card.type_line||card.type||faces[0]?.type||'',manaCost:card.mana_cost||faces[0]?.manaCost||'',power:card.power||faces[0]?.power||'',toughness:card.toughness||faces[0]?.toughness||'',scryfallId:card.scryfall_id||null,set:card.set||'',collectorNumber:card.cn||'',moxfieldPrintId:printId,moxfieldCardId:card.id||entryId||null,printsUri:null,layout:card.layout||'',qty:Math.max(1,Number(quantity)||1),section};}
+  function isActualMoxfieldToken(card){const type=String(card?.type_line||card?.typeLine||card?.type||'').toLowerCase(),layout=String(card?.layout||'').toLowerCase();return card?.isToken===true||card?.is_token===true||card?.token===true||type.includes('token')||['token','double_faced_token'].includes(layout);}
   function isMoxfieldTokenRow(card){return card?.section==='Tokens'&&(card.tokenSource==='moxfield-token-board'||(card.tokenSource==='moxfield-linked-token'&&String(card.type||'').toLowerCase().includes('token')));}
   function moxfieldDeckCards(data){
     const rows=[],boards=data.boards||{};
@@ -437,16 +438,18 @@ import './config.js';
     const tokenBoard=boards.tokens||boards.token||{};
     const tokenEntries=Array.isArray(tokenBoard)?tokenBoard:(tokenBoard.cards||[]);
     const tokenCards=[];
+    for(const entry of (Array.isArray(data.tokens)?data.tokens:Object.values(data.tokens||{}))){const card=entry?.card||entry;if(card?.name&&isActualMoxfieldToken(card))tokenCards.push({...card,tokenQuantity:entry.quantity||entry.qty||1});}
     for(const [entryId,entry] of (Array.isArray(tokenEntries)?tokenEntries.entries():Object.entries(tokenEntries))){
       const card=entry?.card||entry,name=card?.name||entry?.name;
-      if(!name)continue;
-      tokenCards.push({...card,name,uniqueCardId:card.uniqueCardId||entryId});
+      if(!name||!isActualMoxfieldToken(card))continue;
+      const alreadyImported=tokenCards.some(token=>(token.scryfall_id||'')===(card.scryfall_id||'')&&token.name?.toLowerCase()===name.toLowerCase());
+      if(!alreadyImported)tokenCards.push({...card,name,uniqueCardId:card.uniqueCardId||entryId,tokenQuantity:entry.quantity||entry.qty||1});
     }
     const aliases=card=>[card?.id,card?.moxfieldCardId,card?.uniqueCardId,card?.moxfieldPrintId,card?.scryfall_id,card?.scryfallId,card?.name].filter(Boolean).map(value=>String(value).trim().toLocaleLowerCase());
     const rowsByAlias=new Map();for(const row of rows)for(const alias of aliases(row))rowsByAlias.set(alias,row);
     const tokensByAlias=new Map(),tokenRows=[];
     for(const [index,card] of tokenCards.entries()){
-      if(!card?.name)continue;const row={...moxfieldCardRow(card,card.uniqueCardId||card.id||`mox-token-${index}`,1,'Tokens'),moxfieldCardId:card.id||null,tokenSource:'moxfield-token-board'};tokenRows.push(row);for(const alias of aliases(row))tokensByAlias.set(alias,row);
+      if(!card?.name)continue;const row={...moxfieldCardRow(card,card.uniqueCardId||card.id||`mox-token-${index}`,card.tokenQuantity||1,'Tokens'),moxfieldCardId:card.id||null,tokenSource:'moxfield-token-board'};tokenRows.push(row);for(const alias of aliases(row))tokensByAlias.set(alias,row);
     }
     const links=new Map(),link=(sourceKey,tokenKey)=>{const source=rowsByAlias.get(String(sourceKey||'').trim().toLocaleLowerCase()),token=tokensByAlias.get(String(tokenKey||'').trim().toLocaleLowerCase());if(!source||!token)return;const list=links.get(source)||[];if(!list.some(item=>item.scryfallId&&item.scryfallId===token.scryfallId||item.name===token.name))list.push(token);links.set(source,list);};
     for(const [sourceId,tokenIds] of Object.entries(data.cardsToTokens||{}))for(const tokenId of Array.isArray(tokenIds)?tokenIds:[tokenIds])link(sourceId,typeof tokenId==='object'?(tokenId.id||tokenId.uniqueCardId||tokenId.name):tokenId);

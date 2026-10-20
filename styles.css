@@ -281,6 +281,8 @@
 @media(max-width:650px){.seat-zone-open b,.seat-zone-count b{font-size:15px}.zone-request-row{align-items:flex-start;flex-direction:column}.zone-request-actions{width:100%}.zone-request-actions button{flex:1}}
 /* Hand cards keep the familiar MTG card ratio; this variable only affects the hand. */
 .hand-cards .magic-card{width:var(--hand-card-width,145px);height:auto;aspect-ratio:63/88;flex:0 0 var(--hand-card-width,145px)}
+.hand-cards{justify-content:center}
+.hand-cards.is-overflowing{justify-content:flex-start}
 .settings-content input[type=range]{width:100%;padding:0;accent-color:#4385f5;cursor:pointer}
 .settings-content .field-label span{float:right;color:#9ab7ed;font-weight:500;letter-spacing:0}
 .remote-commander-zone{display:none}

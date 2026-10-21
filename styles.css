@@ -184,7 +184,7 @@
 .log-open{display:inline-block}
 .playmat{position:absolute;inset:0;width:100%;height:100%;margin:0;overflow:hidden;border:0;border-radius:0;background:transparent;box-shadow:none;touch-action:none}
 .table-world{left:12px;top:12px;width:1600px;height:calc(100dvh - 77px);transform:translate(var(--pan-x,0px),var(--pan-y,0px)) scale(var(--mat-zoom,1))}
-.player-mat{width:min(calc(100vw - 24px),1500px);height:min(calc(100dvh - 77px),900px);overflow:hidden;border:1px solid #286641;border-radius:6px;background:radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px,radial-gradient(ellipse at 48% 42%,#123b28 0,#0d2d1d 58%,#092316 100%);box-shadow:inset 0 0 50px #00170b55,0 8px 28px #0006}
+.player-mat{width:min(calc(100vw - 32px),1500px);height:min(calc(100dvh - 58px),900px);overflow:hidden;border:1px solid #286641;border-radius:6px;background:radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px,radial-gradient(ellipse at 48% 42%,#123b28 0,#0d2d1d 58%,#092316 100%);box-shadow:inset 0 0 50px #00170b55,0 8px 28px #0006}
 .own-mat{left:0;top:0}
 .player-mat.active-turn{border-color:#58e68a;box-shadow:inset 0 0 55px #0b2b1b55,0 0 0 2px #54dd8340,0 0 28px #39c96a30}
 .player-mat .player-hud{left:12px;top:12px;width:96px;gap:5px;padding:9px;border:1px solid #268653;border-radius:5px;background:#081c13de}

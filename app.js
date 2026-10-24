@@ -9,7 +9,7 @@ import './config.js';
   const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v3', PLAYER_SESSIONS='mtg-table-player-sessions-v1', PLAYER_TAB='mtg-table-player-tab-v1', ACTIONS_POSITION='mtg-table-actions-position-v1';
   const DISCONNECTED_BOARD_CLEANUP_MS=5*60*1000;
   let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,sharedRequests=null,importRows=[],toastTimer,lastScryfallRequest=0,lastLibraryNoticeId='',viewerZone='library',viewerOwnerId=null,viewerAccessRequestId=null,libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',remoteLibraryOwnerId=null,activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false,consumedLifePress=null;
-  let lastPointerPosition=null;
+  let lastPointerPosition=null,activeCardDrag=null,lastCardDragSentAt=0;
   const processedZoneRequests=new Set();
   const inactiveCleanupDone=new Set();
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];
@@ -232,9 +232,40 @@ import './config.js';
       host.append(seat);
     }
   }
+  function setupCardDragging(){
+    const mat=$('#playmat');let suppressClickId=null;
+    const positionAt=(drag,event)=>{const rect=drag.board.getBoundingClientRect();if(!rect.width||!rect.height)return;drag.card.x=(event.clientX-rect.left)/rect.width*100;drag.card.y=(event.clientY-rect.top)/rect.height*100;drag.element.style.left=`${drag.card.x}%`;drag.element.style.top=`${drag.card.y}%`;};
+    mat.addEventListener('pointerdown',event=>{
+      const element=event.target.closest('.magic-card[data-card-id]');if(event.button!==0||!element||element.classList.contains('counter-marker')||event.target.closest('button,a,input,select'))return;
+      const card=state.battlefield.find(item=>item.id===element.dataset.cardId);if(!card||card.counterMarker||room&&cardControllerId(card)!==localPlayerId)return;
+      event.stopImmediatePropagation();activeCardDrag={pointerId:event.pointerId,card,element,board:element.closest('.player-mat')||$('#player-board'),startX:event.clientX,startY:event.clientY,originX:card.x??Number.parseFloat(element.style.left),originY:card.y??Number.parseFloat(element.style.top),started:false};
+    });
+    document.addEventListener('pointermove',event=>{
+      const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;
+      if(!drag.started){if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)<5)return;drag.started=true;drag.element.classList.add('card-being-dragged');drag.element.setPointerCapture?.(event.pointerId);hideHoverCard();}
+      event.preventDefault();positionAt(drag,event);
+      if(p2pProvider&&Date.now()-lastCardDragSentAt>=35){lastCardDragSentAt=Date.now();p2pProvider.awareness.setLocalStateField('cardDrag',{id:drag.card.id,x:drag.card.x,y:drag.card.y});}
+    },{passive:false});
+    const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;if(!drag.started)return;
+      if(cancelled){drag.card.x=drag.originX;drag.card.y=drag.originY;}else positionAt(drag,event);
+      drag.element.classList.remove('card-being-dragged');if(p2pProvider)p2pProvider.awareness.setLocalStateField('cardDrag',null);
+      if(cancelled){drag.element.style.left=`${drag.card.x??36}%`;drag.element.style.top=`${drag.card.y??38}%`;return;}
+      const destination=document.elementFromPoint(event.clientX,event.clientY)?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone;if(destination){moveCard(drag.card.id,'battlefield',destination);return;}
+      const index=state.battlefield.findIndex(card=>card.id===drag.card.id);if(index>=0){const [card]=state.battlefield.splice(index,1);state.battlefield.push(card);}suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);save();syncCard(drag.card,'battlefield');render();
+    };
+    document.addEventListener('pointerup',event=>finish(event));document.addEventListener('pointercancel',event=>finish(event,true));
+    mat.addEventListener('click',event=>{const element=event.target.closest('.magic-card[data-card-id]');if(element&&suppressClickId===element.dataset.cardId){event.preventDefault();event.stopImmediatePropagation();suppressClickId=null;}},true);
+  }
   function renderRemoteCursors(){
-    $$('.remote-cursor').forEach(el=>el.remove());if(!p2pProvider)return;
+    $$('.remote-cursor').forEach(el=>el.remove());
+    $$('.magic-card.live-drag-preview').forEach(el=>{const card=state.battlefield.find(item=>item.id===el.dataset.cardId);if(card){el.style.left=`${card.x??36}%`;el.style.top=`${card.y??38}%`;}el.classList.remove('live-drag-preview');});
+    if(!p2pProvider)return;
     for(const awareness of p2pProvider.awareness.getStates().values()){
+      const drag=awareness.cardDrag;
+      if(drag?.id&&Number.isFinite(drag.x)&&Number.isFinite(drag.y)){
+        const cardElement=$$('[data-card-id]').find(element=>element.dataset.cardId===drag.id);
+        if(cardElement){cardElement.style.left=`${drag.x}%`;cardElement.style.top=`${drag.y}%`;cardElement.classList.add('live-drag-preview');}
+      }
       const player=awareness.player,cursor=awareness.cursor;if(!player?.id||player.id===localPlayerId||!cursor||!Number.isFinite(cursor.x)||!Number.isFinite(cursor.y))continue;
       const board=document.querySelector(`.player-mat[data-player-id="${CSS.escape(cursor.boardId||player.id)}"]`);if(!board)continue;
       const pointer=document.createElement('div');pointer.className='remote-cursor';pointer.style.left=`${Math.max(0,Math.min(100,cursor.x))}%`;pointer.style.top=`${Math.max(0,Math.min(100,cursor.y))}%`;pointer.style.setProperty('--cursor-color',boardColor(player.color));pointer.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8 19.5 15l-7.1.7-3.8 5.1L4 2.8Z"/></svg><span>${esc(player.name||'Planeswalker')}</span>`;board.append(pointer);
@@ -332,7 +363,7 @@ import './config.js';
     const faceImage=face.image||card.image,faceName=face.name||card.name;if(card.counterMarker){const isPtCounter=card.counterMarker==="+1/+1"||card.counterMarker==="-1/-1",isManaCounter=isManaCounterKind(card.counterMarker),isNumericCounter=card.counterMarker==='Counter';el.style.setProperty('--counter-bg',isPtCounter||isNumericCounter?'#f4f4f0':counterMarkerColor(card.counterMarker));el.dataset.counterKind=card.counterMarker;el.innerHTML=isPtCounter?`<span class="counter-marker-label">${esc(formatCounterValues(card.counterPower,card.counterToughness)||card.counterMarker)}</span>`:isNumericCounter?`<span class="counter-marker-label numeric-counter-label">${Math.max(0,Math.trunc(Number(card.counterValue)||0))}</span>`:isManaCounter?`<img class="mana-counter-image" src="${manaCounterSymbolUrl(card.counterMarker)}" alt="Mana ${escAttr(manaCounterInfo(card.counterMarker).label)}">`:`<img class="counter-marker-image" data-counter-kind="${escAttr(card.counterMarker)}" src="${counterIconUrl(card.counterMarker)}" alt="${escAttr(card.counterMarker)}">`;}else if(faceImage){const img=document.createElement('img');img.src=faceImage;img.alt=faceName;img.loading='lazy';if(isFlipLayout(card.layout)&&card.faceIndex%2)img.style.transform='rotate(180deg)';img.onerror=()=>{img.remove();el.classList.add('no-image');el.insertAdjacentHTML('beforeend',`<span class="card-fallback">${esc(faceName)}</span>`);};el.append(img);}else{el.insertAdjacentHTML('beforeend',`<span class="card-fallback">${esc(faceName)}</span>`);}
     if(card.counterTypes)for(const [kind,count] of Object.entries(card.counterTypes))if(count)el.insertAdjacentHTML('beforeend',`<span class="card-counter card-keyword-counter">${esc(kind)} ${count>1?count:''}</span>`);if(card.isCommander&&card.commanderTax>0)el.insertAdjacentHTML('beforeend',`<span class="commander-tax" title="Coût supplémentaire du commandant">+${Number(card.commanderTax)} mana</span>`);
     if(canFlipCard(card))el.insertAdjacentHTML('beforeend',`<span class="card-flip-hint" title="Carte réversible · touche F">${(card.faceIndex||0)+1}/${card.faces.length} ↻</span>`);
-    el.addEventListener('dragstart',e=>{if(card.counterMarker)e.stopPropagation();hideHoverCard();e.dataTransfer.setData('text/plain',JSON.stringify({id:card.id,from:zone}));e.dataTransfer.effectAllowed='move';});
+    if(zone==='battlefield'&&!card.counterMarker)el.draggable=false;el.addEventListener('dragstart',e=>{if(card.counterMarker)e.stopPropagation();hideHoverCard();e.dataTransfer.setData('text/plain',JSON.stringify({id:card.id,from:zone}));e.dataTransfer.effectAllowed='move';});
     el.addEventListener('click',e=>{if(card.counterMarker){e.stopPropagation();if(isNumericCounterMarker(card.counterMarker)){const rect=el.getBoundingClientRect(),direction=e.clientY<rect.top+rect.height/2?1:-1,next=Math.max(0,Math.trunc(Number(card.counterValue)||0)+direction),label=manaCounterInfo(card.counterMarker)?.label||'compteur';card.counterValue=next;save();syncCard(card,'battlefield');render();logAction(`a ${direction>0?'ajouté':'retiré'} 1 ${label} (${next})`);}return;}if(e.button!==0)return;if(zone==='hand'){if(e.detail===2){showCard(card);return;}castFromHand(card);}else if(zone==='battlefield'){if(clickCombatCard(card))return;toggleCardTap(card);}else if(e.detail===2)showCard(card);});
     el.addEventListener('contextmenu',e=>{e.preventDefault();if(card.counterMarker){e.stopPropagation();showCounterMarkerMenu(e,card);return;}showCardMenu(e,card,zone);});return el;
   }
@@ -611,7 +642,7 @@ import './config.js';
     $('#send').onclick=sendChat;$('#chat-message').onkeydown=e=>{if(e.key==='Enter')sendChat();};$('#collapse-log').onclick=()=>{$('#action-log').classList.toggle('collapsed');document.querySelector('.game-shell').classList.toggle('log-collapsed');};$('#log-open').onclick=()=>$('#action-log').classList.toggle('open');
     $('#zoom-in').onclick=()=>zoomMat(.1);$('#zoom-out').onclick=()=>zoomMat(-.1);$('#view-reset').onclick=fitTableView;window.addEventListener('resize',()=>{fitTableView();renderOtherMats();});$('#life-reset').title='Remettre vos points de vie au total de départ';$$('.close-card').forEach(b=>b.onclick=()=>$('#card-dialog').close());$('#card-dialog').addEventListener('click',e=>{if(e.target===$('#card-dialog'))$('#card-dialog').close();});
     $('#playmat').addEventListener('contextmenu',e=>{if(e.defaultPrevented||e.target.closest('.magic-card,button,input,select,a,.zone:not(.battlefield),.game-actions'))return;e.preventDefault();showPlaymatMenu(e);});document.addEventListener('click',e=>{if(!e.target.closest('.card-menu'))$$('.card-menu').forEach(menu=>menu.remove());});document.addEventListener('mouseover',e=>{const el=e.target.closest?.('.magic-card');if(el)hoveredCardId=el.dataset.cardId;});$('#copy-top-card').onclick=()=>{const found=findLocalCard(hoveredCardId);if(!found){toast('Survolez une de vos cartes pour la copier.');return;}cloneCard(found.card,'battlefield');};
-    setupDrops();
+    setupCardDragging();setupDrops();
   }
   function validMoxfieldUrl(value){try{const url=new URL(value.trim());if(!['moxfield.com','www.moxfield.com'].includes(url.hostname.toLowerCase())||!/^\/decks\/[\w-]+/.test(url.pathname))return null;return url;}catch{return null;}}
   function startingLife(){return (room?.format||state.roomFormat)==='Commander'?40:20;}

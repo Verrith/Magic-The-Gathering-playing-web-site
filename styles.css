@@ -409,3 +409,4 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 /* Aura-like direct dragging for cards already on the battlefield. */
 .magic-card.card-being-dragged,.magic-card.live-drag-preview{z-index:30!important;transition:none!important;filter:brightness(1.04);box-shadow:0 12px 30px #000b;cursor:grabbing}
 .magic-card.card-being-dragged{user-select:none;-webkit-user-drag:none}
+.magic-card.card-drag-object,.magic-card.remote-card-drag-preview{cursor:grabbing;pointer-events:none}

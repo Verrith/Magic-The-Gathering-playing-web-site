@@ -329,7 +329,7 @@
 .mana-counter-controls button:hover{transform:scale(1.06)}
 .mana-counter-controls button small{position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);z-index:2;padding:2px 4px;border-radius:8px;background:#090b10;color:#fff;font-size:7px;font-weight:800;line-height:1;white-space:nowrap;opacity:0;pointer-events:none}
 .mana-counter-controls button:hover small{opacity:1}
-.mana-counter-symbol{display:grid;place-items:center;width:100%;height:100%;color:var(--mana-ink,#171717);font-size:17px;font-weight:900;line-height:1;text-shadow:0 1px 1px #fff4;pointer-events:none}
+.mana-counter-image{display:block;width:100%;height:100%;object-fit:contain;border-radius:50%;filter:none!important;pointer-events:none}
 .counter-marker[data-counter-kind^="Mana-"]{overflow:visible!important}
 
 /* Card context menu follows Aura's compact, keyboard-hinted layout. */

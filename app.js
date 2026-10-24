@@ -255,7 +255,7 @@ import './config.js';
       event.preventDefault();followBoard(drag,event);positionAt(drag,event);
       if(p2pProvider&&Date.now()-lastCardDragSentAt>=25){lastCardDragSentAt=Date.now();publishDrag(drag);}
     },{passive:false});
-    const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;if(!drag.started)return;
+    const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;p2pProvider?.awareness.setLocalStateField('cardDrag',null);if(!drag.started)return;
       if(!cancelled)followBoard(drag,event);if(drag.from==='hand'){
         suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);if(cancelled){drag.card.dragging=false;drag.card.controllerId=drag.originControllerId;sharedCards?.delete(drag.card.id);drag.element.classList.remove('card-being-dragged');drag.element.setAttribute('style',drag.originalStyle||'');const parent=drag.placeholder?.parentElement;if(parent)parent.insertBefore(drag.element,drag.placeholder);drag.placeholder?.remove();if(!parent)render();return;}
         const target=document.elementFromPoint(event.clientX,event.clientY),destination=target?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone,rect=drag.board.getBoundingClientRect(),onBoard=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;

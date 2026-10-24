@@ -233,7 +233,8 @@ import './config.js';
     }
   }
   function setupCardDragging(){
-    const mat=$('#playmat'),hand=$('#hand-cards');let suppressClickId=null;
+    const mat=$('#playmat'),hand=$('#hand-cards');let suppressClickId=null,suppressClickTimer=0;
+    const suppressDragClick=cardId=>{suppressClickId=cardId;clearTimeout(suppressClickTimer);suppressClickTimer=setTimeout(()=>{if(suppressClickId===cardId)suppressClickId=null;},600);};
     const positionAt=(drag,event)=>{const worldRect=drag.world.getBoundingClientRect(),zoom=Number(mat.dataset.zoom)||1;if(!worldRect.width)return;const offsetX=drag.from==='hand'?(drag.grabFractionX-.5)*drag.boardWidth:drag.grabOffsetX,offsetY=drag.from==='hand'?(drag.grabFractionY-.5)*drag.boardHeight:drag.grabOffsetY,centerX=(event.clientX-worldRect.left)/zoom-offsetX/zoom,centerY=(event.clientY-worldRect.top)/zoom-offsetY/zoom;drag.worldX=centerX;drag.worldY=centerY;drag.element.style.left=`${centerX}px`;drag.element.style.top=`${centerY}px`;const rect=drag.board.getBoundingClientRect();drag.card.x=(event.clientX-rect.left-offsetX)/rect.width*100;drag.card.y=(event.clientY-rect.top-offsetY)/rect.height*100;};
     const boardAt=(event,fallback)=>document.elementFromPoint(event.clientX,event.clientY)?.closest('.player-mat')||fallback;
     const followBoard=(drag,event)=>{const board=boardAt(event,drag.originBoard);drag.board=board;drag.targetControllerId=board.id==='player-board'?localPlayerId:(board.dataset.playerId||drag.originControllerId||localPlayerId);};
@@ -257,7 +258,7 @@ import './config.js';
     },{passive:false});
     const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;p2pProvider?.awareness.setLocalStateField('cardDrag',null);if(!drag.started)return;
       if(!cancelled)followBoard(drag,event);if(drag.from==='hand'){
-        suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);if(cancelled){drag.card.dragging=false;drag.card.controllerId=drag.originControllerId;sharedCards?.delete(drag.card.id);drag.element.classList.remove('card-being-dragged');drag.element.setAttribute('style',drag.originalStyle||'');const parent=drag.placeholder?.parentElement;if(parent)parent.insertBefore(drag.element,drag.placeholder);drag.placeholder?.remove();if(!parent)render();return;}
+        suppressDragClick(drag.card.id);if(cancelled){drag.card.dragging=false;drag.card.controllerId=drag.originControllerId;sharedCards?.delete(drag.card.id);drag.element.classList.remove('card-being-dragged');drag.element.setAttribute('style',drag.originalStyle||'');const parent=drag.placeholder?.parentElement;if(parent)parent.insertBefore(drag.element,drag.placeholder);drag.placeholder?.remove();if(!parent)render();return;}
         const target=document.elementFromPoint(event.clientX,event.clientY),destination=target?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone,rect=drag.board.getBoundingClientRect(),onBoard=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;
         drag.element.remove();drag.placeholder?.remove();drag.card.dragging=false;if(destination)moveCard(drag.card.id,'hand',destination);else if(onBoard){positionAt(drag,event);moveCard(drag.card.id,'hand','battlefield',{x:drag.card.x,y:drag.card.y,controllerId:drag.targetControllerId||localPlayerId});}else{drag.card.controllerId=drag.originControllerId;sharedCards?.delete(drag.card.id);render();}
         return;
@@ -265,13 +266,14 @@ import './config.js';
       drag.card.dragging=false;if(cancelled){drag.card.controllerId=drag.originControllerId;drag.card.x=drag.originX;drag.card.y=drag.originY;drag.card.attachedTo=drag.originalAttachedTo;drag.card.offsetX=drag.originalOffsetX;drag.card.offsetY=drag.originalOffsetY;}else{positionAt(drag,event);drag.card.controllerId=drag.targetControllerId||drag.originControllerId;}
       drag.element.classList.remove('card-being-dragged');
       if(cancelled){save();syncCard(drag.card,'battlefield');render();return;}
-      suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);
+      suppressDragClick(drag.card.id);
       if(drag.card.counterMarker){const targetElement=document.elementFromPoint(event.clientX,event.clientY)?.closest('.magic-card[data-card-id]'),targetCard=targetElement&&state.battlefield.find(candidate=>candidate.id===targetElement.dataset.cardId&&!candidate.counterMarker);if(targetCard){const targetRect=targetElement.getBoundingClientRect();drag.card.attachedTo=targetCard.id;drag.card.offsetX=Math.max(-10,Math.min(110,(event.clientX-targetRect.left)/targetRect.width*100));drag.card.offsetY=Math.max(-10,Math.min(110,(event.clientY-targetRect.top)/targetRect.height*100));drag.card.x=undefined;drag.card.y=undefined;}else{drag.card.attachedTo=null;drag.card.offsetX=0;drag.card.offsetY=0;}save();syncCard(drag.card,'battlefield');render();return;}
       const destination=document.elementFromPoint(event.clientX,event.clientY)?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone;if(destination){moveCard(drag.card.id,'battlefield',destination);return;}
       const index=state.battlefield.findIndex(card=>card.id===drag.card.id);if(index>=0){const [card]=state.battlefield.splice(index,1);state.battlefield.push(card);}save();syncCard(drag.card,'battlefield');render();
     };
     document.addEventListener('pointerup',event=>finish(event));document.addEventListener('pointercancel',event=>finish(event,true));
-    document.addEventListener('click',event=>{const element=event.target.closest?.('.magic-card[data-card-id]');if(element&&suppressClickId===element.dataset.cardId){event.preventDefault();event.stopImmediatePropagation();suppressClickId=null;}},true);
+    document.addEventListener('click',event=>{const element=event.target.closest?.('.magic-card[data-card-id]');if(element&&suppressClickId===element.dataset.cardId){event.preventDefault();event.stopImmediatePropagation();clearTimeout(suppressClickTimer);suppressClickId=null;}},true);
+    window.addEventListener('blur',()=>{if(activeCardDrag)finish({pointerId:activeCardDrag.pointerId},true);});
   }
   function renderRemoteCursors(){
     $$('.remote-cursor').forEach(el=>el.remove());

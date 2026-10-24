@@ -81,7 +81,7 @@ import './config.js';
     // relays the encrypted WebRTC data channel when strict NAT/firewalls block P2P.
     p2pProvider=new WebrtcProvider(`mtg-table-v1-${location.host}${location.pathname}-${clean}`,p2pDoc,{signaling:signalingServers,maxConns:Number.POSITIVE_INFINITY,filterBcConns:false,peerOpts:{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},...configuredIceServers]}}});
     setAwarenessPlayer();
-    sharedPlayers.observeDeep(refreshP2P);sharedCards.observe(refreshP2P);sharedLog.observe(refreshP2P);sharedGame.observe(refreshP2P);sharedRequests.observe(refreshZoneRequests);p2pProvider.awareness.on('change',presenceChanged);refreshZoneRequests();
+    sharedPlayers.observeDeep(refreshP2P);sharedCards.observe(()=>{if(!activeCardDrag)refreshP2P();});sharedLog.observe(refreshP2P);sharedGame.observe(refreshP2P);sharedRequests.observe(refreshZoneRequests);p2pProvider.awareness.on('change',presenceChanged);refreshZoneRequests();
     p2pProvider.on('status',updateConnectionStatus);$('#room-label').textContent=`SALLE ${clean}`;$('#connection-label').textContent='Connecting';$('#connection-detail').textContent='Connecting to the peer room…';
     roomConnectTimedOut=false;clearTimeout(roomConnectTimer);roomConnectTimer=setTimeout(()=>{roomConnectTimedOut=true;updateConnectionStatus();},15000);
     setTimeout(registerLocalPlayer,1600);setTimeout(registerLocalPlayer,5000);refreshP2P();
@@ -235,6 +235,7 @@ import './config.js';
   function setupCardDragging(){
     const mat=$('#playmat'),hand=$('#hand-cards');let suppressClickId=null;
     const positionAt=(drag,event)=>{const rect=drag.board.getBoundingClientRect();if(!rect.width||!rect.height)return;drag.card.x=(event.clientX-rect.left)/rect.width*100-drag.grabX;drag.card.y=(event.clientY-rect.top)/rect.height*100-drag.grabY;drag.element.style.left=`${drag.card.x}%`;drag.element.style.top=`${drag.card.y}%`;};
+    const publishPosition=(drag,event)=>{if(!sharedCards||!p2pProvider)return;const rect=drag.board.getBoundingClientRect(),inside=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;if(drag.from==='hand'){if(!inside){sharedCards.delete(drag.card.id);return;}const x=(event.clientX-rect.left)/rect.width*100-(drag.grabFractionX-.5)*drag.boardWidth/rect.width*100,y=(event.clientY-rect.top)/rect.height*100-(drag.grabFractionY-.5)*drag.boardHeight/rect.height*100;sharedCards.set(drag.card.id,publicCard({...drag.card,ownerId:cardOwnerId(drag.card),originalOwnerId:cardOwnerId(drag.card),controllerId:localPlayerId,zone:'battlefield',x,y},'battlefield'));}else if(inside)sharedCards.set(drag.card.id,publicCard(drag.card,'battlefield'));};
     mat.addEventListener('pointerdown',event=>{
       const element=event.target.closest('.magic-card[data-card-id]');if(event.button!==0||!element||element.classList.contains('counter-marker')||event.target.closest('button,a,input,select'))return;
       const card=state.battlefield.find(item=>item.id===element.dataset.cardId);if(!card||card.counterMarker||room&&cardControllerId(card)!==localPlayerId)return;
@@ -249,18 +250,18 @@ import './config.js';
       const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;
       if(!drag.started){if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)<5)return;drag.started=true;hideHoverCard();if(drag.from==='hand'){const rect=drag.element.getBoundingClientRect();drag.ghost=drag.element.cloneNode(true);drag.ghost.removeAttribute('data-card-id');drag.ghost.classList.add('card-being-dragged','card-drag-object');Object.assign(drag.ghost.style,{position:'fixed',left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`,margin:'0',transform:'none',pointerEvents:'none',zIndex:'10000'});document.body.append(drag.ghost);drag.element.style.visibility='hidden';}else{drag.element.classList.add('card-being-dragged');drag.element.setPointerCapture?.(event.pointerId);}}
       event.preventDefault();if(drag.from==='hand'){const boardRect=drag.board.getBoundingClientRect(),overBoard=event.clientX>=boardRect.left&&event.clientX<=boardRect.right&&event.clientY>=boardRect.top&&event.clientY<=boardRect.bottom,width=overBoard?drag.boardWidth:drag.handWidth,height=overBoard?drag.boardHeight:drag.handHeight;drag.ghost.style.width=`${width}px`;drag.ghost.style.height=`${height}px`;drag.ghost.style.left=`${event.clientX-drag.grabFractionX*width}px`;drag.ghost.style.top=`${event.clientY-drag.grabFractionY*height}px`;}else positionAt(drag,event);
-      if(p2pProvider&&Date.now()-lastCardDragSentAt>=35){lastCardDragSentAt=Date.now();if(drag.from==='hand'){const rect=drag.board.getBoundingClientRect(),over=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;p2pProvider.awareness.setLocalStateField('cardDrag',over?{id:drag.card.id,from:'hand',name:drag.card.name,image:drag.card.image,x:(event.clientX-rect.left)/rect.width*100,y:(event.clientY-rect.top)/rect.height*100}:null);}else p2pProvider.awareness.setLocalStateField('cardDrag',{id:drag.card.id,x:drag.card.x,y:drag.card.y});}
+      if(p2pProvider&&Date.now()-lastCardDragSentAt>=50){lastCardDragSentAt=Date.now();publishPosition(drag,event);}
     },{passive:false});
     const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;if(!drag.started)return;
       if(drag.from==='hand'){
-        drag.ghost?.remove();drag.element.style.visibility='';if(p2pProvider)p2pProvider.awareness.setLocalStateField('cardDrag',null);suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);if(cancelled)return;
+        drag.ghost?.remove();drag.element.style.visibility='';suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);if(cancelled){sharedCards?.delete(drag.card.id);return;}
         const target=document.elementFromPoint(event.clientX,event.clientY),destination=target?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone,rect=drag.board.getBoundingClientRect(),onBoard=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;
-        if(destination)moveCard(drag.card.id,'hand',destination);else if(onBoard){const x=(event.clientX-rect.left)/rect.width*100-(drag.grabFractionX-.5)*drag.boardWidth/rect.width*100,y=(event.clientY-rect.top)/rect.height*100-(drag.grabFractionY-.5)*drag.boardHeight/rect.height*100;moveCard(drag.card.id,'hand','battlefield',{x,y});}else return;
+        if(destination)moveCard(drag.card.id,'hand',destination);else if(onBoard){const x=(event.clientX-rect.left)/rect.width*100-(drag.grabFractionX-.5)*drag.boardWidth/rect.width*100,y=(event.clientY-rect.top)/rect.height*100-(drag.grabFractionY-.5)*drag.boardHeight/rect.height*100;moveCard(drag.card.id,'hand','battlefield',{x,y});}else sharedCards?.delete(drag.card.id);
         return;
       }
       if(cancelled){drag.card.x=drag.originX;drag.card.y=drag.originY;}else positionAt(drag,event);
-      drag.element.classList.remove('card-being-dragged');if(p2pProvider)p2pProvider.awareness.setLocalStateField('cardDrag',null);
-      if(cancelled){drag.element.style.left=`${drag.card.x??36}%`;drag.element.style.top=`${drag.card.y??38}%`;return;}
+      drag.element.classList.remove('card-being-dragged');
+      if(cancelled){drag.element.style.left=`${drag.card.x??36}%`;drag.element.style.top=`${drag.card.y??38}%`;save();syncCard(drag.card,'battlefield');render();return;}
       suppressClickId=drag.card.id;setTimeout(()=>{if(suppressClickId===drag.card.id)suppressClickId=null;},0);
       const destination=document.elementFromPoint(event.clientX,event.clientY)?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone;if(destination){moveCard(drag.card.id,'battlefield',destination);return;}
       const index=state.battlefield.findIndex(card=>card.id===drag.card.id);if(index>=0){const [card]=state.battlefield.splice(index,1);state.battlefield.push(card);}save();syncCard(drag.card,'battlefield');render();
@@ -270,16 +271,9 @@ import './config.js';
   }
   function renderRemoteCursors(){
     $$('.remote-cursor').forEach(el=>el.remove());
-    $$('.remote-card-drag-preview').forEach(el=>el.remove());
-    $$('.magic-card.live-drag-preview').forEach(el=>{const card=state.battlefield.find(item=>item.id===el.dataset.cardId);if(card){el.style.left=`${card.x??36}%`;el.style.top=`${card.y??38}%`;}el.classList.remove('live-drag-preview');});
     if(!p2pProvider)return;
     for(const awareness of p2pProvider.awareness.getStates().values()){
-      const drag=awareness.cardDrag;
-      if(drag?.id&&Number.isFinite(drag.x)&&Number.isFinite(drag.y)){
-        const cardElement=$$('[data-card-id]').find(element=>element.dataset.cardId===drag.id);
-        if(cardElement){cardElement.style.left=`${drag.x}%`;cardElement.style.top=`${drag.y}%`;cardElement.classList.add('live-drag-preview');}
-      }
-      const player=awareness.player,cursor=awareness.cursor;if(drag?.from==='hand'&&player?.id&&player.id!==localPlayerId&&drag.image&&Number.isFinite(drag.x)&&Number.isFinite(drag.y)){const board=document.querySelector(`.player-mat[data-player-id="${CSS.escape(player.id)}"]`),host=board?.querySelector('.board-cards');if(host){const preview=document.createElement('div'),image=document.createElement('img');preview.className='magic-card remote-card-drag-preview';preview.setAttribute('aria-label',drag.name||'Carte');image.src=drag.image;image.alt=drag.name||'';preview.append(image);preview.style.left=`${drag.x}%`;preview.style.top=`${drag.y}%`;host.append(preview);}}
+      const player=awareness.player,cursor=awareness.cursor;
       if(!player?.id||player.id===localPlayerId||!cursor||!Number.isFinite(cursor.x)||!Number.isFinite(cursor.y))continue;
       const board=document.querySelector(`.player-mat[data-player-id="${CSS.escape(cursor.boardId||player.id)}"]`);if(!board)continue;
       const pointer=document.createElement('div');pointer.className='remote-cursor';pointer.style.left=`${Math.max(0,Math.min(100,cursor.x))}%`;pointer.style.top=`${Math.max(0,Math.min(100,cursor.y))}%`;pointer.style.setProperty('--cursor-color',boardColor(player.color));pointer.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8 19.5 15l-7.1.7-3.8 5.1L4 2.8Z"/></svg><span>${esc(player.name||'Planeswalker')}</span>`;board.append(pointer);

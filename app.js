@@ -234,11 +234,11 @@ import './config.js';
   }
   function setupCardDragging(){
     const mat=$('#playmat');let suppressClickId=null;
-    const positionAt=(drag,event)=>{const rect=drag.board.getBoundingClientRect();if(!rect.width||!rect.height)return;drag.card.x=(event.clientX-rect.left)/rect.width*100;drag.card.y=(event.clientY-rect.top)/rect.height*100;drag.element.style.left=`${drag.card.x}%`;drag.element.style.top=`${drag.card.y}%`;};
+    const positionAt=(drag,event)=>{const rect=drag.board.getBoundingClientRect();if(!rect.width||!rect.height)return;drag.card.x=(event.clientX-rect.left)/rect.width*100-drag.grabX;drag.card.y=(event.clientY-rect.top)/rect.height*100-drag.grabY;drag.element.style.left=`${drag.card.x}%`;drag.element.style.top=`${drag.card.y}%`;};
     mat.addEventListener('pointerdown',event=>{
       const element=event.target.closest('.magic-card[data-card-id]');if(event.button!==0||!element||element.classList.contains('counter-marker')||event.target.closest('button,a,input,select'))return;
       const card=state.battlefield.find(item=>item.id===element.dataset.cardId);if(!card||card.counterMarker||room&&cardControllerId(card)!==localPlayerId)return;
-      event.stopImmediatePropagation();activeCardDrag={pointerId:event.pointerId,card,element,board:element.closest('.player-mat')||$('#player-board'),startX:event.clientX,startY:event.clientY,originX:card.x??Number.parseFloat(element.style.left),originY:card.y??Number.parseFloat(element.style.top),started:false};
+      event.stopImmediatePropagation();const board=element.closest('.player-mat')||$('#player-board'),rect=board.getBoundingClientRect(),cardX=card.x??Number.parseFloat(element.style.left),cardY=card.y??Number.parseFloat(element.style.top);activeCardDrag={pointerId:event.pointerId,card,element,board,startX:event.clientX,startY:event.clientY,originX:cardX,originY:cardY,grabX:rect.width?(event.clientX-rect.left)/rect.width*100-cardX:0,grabY:rect.height?(event.clientY-rect.top)/rect.height*100-cardY:0,started:false};
     });
     document.addEventListener('pointermove',event=>{
       const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;

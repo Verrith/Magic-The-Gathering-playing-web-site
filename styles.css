@@ -116,7 +116,7 @@
 .card-stats{font-weight:700;color:#c8d9ff!important;font-size:13px!important}
 @media(max-width:650px){.stack-strip{max-width:90vw;font-size:7px}.game-actions:has(#ready-btn:not(.hidden)){max-width:calc(100vw - 10px);overflow:visible}.game-actions:has(#ready-btn:not(.hidden)) .action-buttons{flex-wrap:wrap;justify-content:center}.opponent-hand{height:15px}.opponent-hand i{width:9px;height:13px}}
 
-/* Aura-style card shortcuts and the summoning-sickness marker. */
+/* Aura-style card shortcuts. */
 .aura-card-menu{min-width:178px;max-height:calc(100dvh - 12px);overflow-y:auto;background:#111827;border-color:#334155;border-radius:10px;padding:5px}
 .aura-card-menu button{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:8px 10px;color:#edf2fa;font-size:12px}
 .aura-card-menu button:hover{background:#243044}
@@ -134,7 +134,6 @@
 .seat-life-controls label{display:flex;align-items:baseline;gap:3px}
 .seat-life-controls .seat-life-input{width:42px;min-width:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:19px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
 .seat-life-controls small{font-size:8px;color:#929eaa}
-.card-sick{position:absolute;left:4px;top:4px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#18233aee;border:1px solid #91a9ee;color:#dbe6ff;font:700 10px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .card-flip-hint{position:absolute;left:4px;bottom:4px;padding:3px 5px;border-radius:5px;background:#172033e8;border:1px solid #96a9de;color:#e2e9ff;font:8px ui-monospace,monospace;box-shadow:0 1px 5px #0009}
 .aura-board-menu{width:184px;min-width:184px;background:#111b30;border-color:#334155;border-radius:10px;padding:5px;gap:1px}
 .aura-board-menu>button{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:12px;color:#f0f3fa}
@@ -158,7 +157,6 @@
 .magic-card.counter-marker[data-counter-kind="Flash"] .counter-marker-image,.magic-card.counter-marker[data-counter-kind="Defender"] .counter-marker-image{width:68%;height:68%}
 .card-keyword-counter{display:block;left:3px;right:auto;top:auto;bottom:3px;max-width:calc(100% - 6px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:650px){.keyword-counter-grid,.keyword-left .keyword-counter-grid{left:0;right:auto;top:calc(100% + 5px);width:min(440px,calc(100vw - 24px));grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;padding:8px}.aura-board-menu{max-height:calc(100dvh - 10px)}}
-.magic-card.summoning-sick{outline:1px solid #8195d3}
 
 /* Player identity is shared through Yjs Awareness; these styles work on static GitHub Pages too. */
 .player-mat{--player-color:#22c55e;border-color:color-mix(in srgb,var(--player-color) 62%,#243b2d);background:radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px,radial-gradient(ellipse at 48% 42%,color-mix(in srgb,var(--player-color) 27%,#123b28) 0,color-mix(in srgb,var(--player-color) 14%,#0d2d1d) 58%,#092316 100%)}
@@ -331,6 +329,10 @@
 .mana-counter-controls button:hover small{opacity:1}
 .mana-counter-image{display:block;width:100%;height:100%;object-fit:contain;border-radius:50%;filter:none!important;pointer-events:none}
 .counter-marker[data-counter-kind^="Mana-"]{overflow:visible!important}
+.board-cards>.magic-card.summoning-sick:not(.tapped){transform:translate(-50%,-50%) rotate(30deg)}
+.board-cards>.magic-card.summoning-sick:not(.tapped):hover{transform:translate(-50%,-54%) rotate(30deg)}
+.player-mat .board-cards>.magic-card.summoning-sick:not(.tapped){transform:translate(-50%,-50%) rotate(30deg)}
+.player-mat .board-cards>.magic-card.summoning-sick:not(.tapped):hover{transform:translate(-50%,-54%) rotate(30deg)}
 
 /* Card context menu follows Aura's compact, keyboard-hinted layout. */
 .aura-card-menu{width:178px;min-width:178px;padding:5px;border:1px solid #28354d;border-radius:11px;background:#101a2d;box-shadow:0 12px 32px #0009}

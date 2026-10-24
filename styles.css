@@ -324,7 +324,7 @@
 .counter-marker[data-counter-kind="Counter"]{overflow:visible!important}
 .aura-board-menu .pt-counter-controls button small{font-size:7px}
 @media(max-width:650px){.aura-board-menu .keyword-counter-grid,.aura-board-menu.keyword-left .keyword-counter-grid{gap:4px;padding:6px}}
-.mana-counter-controls{display:grid;grid-template-columns:repeat(6,28px);justify-content:center;gap:6px;padding:7px 4px 9px;border-top:1px solid #39465a}
+.mana-counter-controls{display:grid;grid-template-columns:repeat(5,28px);justify-content:center;gap:6px;padding:7px 4px 9px;border-top:1px solid #39465a}
 .mana-counter-controls button{position:relative;width:28px;height:28px;margin:0;padding:0;border:0;border-radius:50%;background:var(--counter-bg);color:var(--mana-ink);display:grid;place-items:center;cursor:grab;box-shadow:0 2px 5px #0008}
 .mana-counter-controls button:hover{transform:scale(1.06)}
 .mana-counter-controls button small{position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);z-index:2;padding:2px 4px;border-radius:8px;background:#090b10;color:#fff;font-size:7px;font-weight:800;line-height:1;white-space:nowrap;opacity:0;pointer-events:none}

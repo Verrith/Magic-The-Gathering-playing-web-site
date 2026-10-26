@@ -411,3 +411,12 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 .magic-card.card-being-dragged{user-select:none;-webkit-user-drag:none}
 .remote-drag-layer{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:10001}
 .remote-card-being-dragged{pointer-events:none!important;cursor:grabbing;box-shadow:0 10px 26px #000b!important}
+
+/* Optional per-player playmat artwork, shared through the room player state. */
+.player-mat{isolation:isolate}
+.player-mat::before{content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;background:var(--board-image) center/cover no-repeat;opacity:.34;pointer-events:none}
+.player-mat>*{z-index:1}
+.board-image-control{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.board-image-control .file-label{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;cursor:pointer}
+.board-image-preview{width:96px;height:54px;object-fit:cover;border:1px solid #424752;border-radius:6px;background:#10141b}
+.board-image-note{margin:7px 0 0}

@@ -420,3 +420,10 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 .board-image-control .file-label{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;cursor:pointer}
 .board-image-preview{width:96px;height:54px;object-fit:cover;border:1px solid #424752;border-radius:6px;background:#10141b}
 .board-image-note{margin:7px 0 0}
+
+/* Compact game identity in the top-left toolbar. */
+.brand-lockup{display:flex;align-items:center;gap:8px;flex:none;padding-right:4px;color:#e7edf2;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.brand-mark{display:block;width:34px;height:34px;filter:drop-shadow(0 2px 6px #48c89942)}
+.brand-name b{color:#7bdcb0;font-weight:800}
+@media(max-width:1000px){.brand-lockup{gap:0;padding-right:0}.brand-name{display:none}.top-left{gap:8px}}
+@media(max-width:650px){.brand-mark{width:29px;height:29px}.top-left{gap:5px}}

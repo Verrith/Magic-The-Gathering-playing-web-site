@@ -284,6 +284,7 @@ import './config.js';
     // shared card when clients received pointer updates out of order. Keep the
     // last confirmed card in place until the final Yjs card update arrives.
     $('#remote-drag-layer')?.remove();
+    if(!p2pProvider)return;
     for(const awareness of p2pProvider.awareness.getStates().values()){
       const player=awareness.player,cursor=awareness.cursor;
       if(!player?.id||player.id===localPlayerId||!cursor||!Number.isFinite(cursor.x)||!Number.isFinite(cursor.y))continue;

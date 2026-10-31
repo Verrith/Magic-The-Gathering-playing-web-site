@@ -284,7 +284,9 @@ import './config.js';
     $$('.remote-cursor').forEach(el=>el.remove());
     if(!p2pProvider){remoteDragElements.forEach(el=>el.remove());remoteDragElements.clear();return;}
     const activeDrags=new Map([...p2pProvider.awareness.getStates().values()].filter(awareness=>awareness.player?.id&&awareness.player.id!==localPlayerId&&awareness.cardDrag?.id&&awareness.cardDrag.card).map(awareness=>[awareness.cardDrag.id,awareness.cardDrag]));
-    $$('[data-card-id]').forEach(element=>{if(element.closest('#remote-drag-layer'))return;element.style.visibility=activeDrags.has(element.dataset.cardId)?'hidden':'';});
+    // Keep the shared card visible at its last confirmed position while the drag
+    // preview follows the remote pointer. If the final awareness packet is lost,
+    // the original card can no longer stay hidden indefinitely.
     for(const [cardId,element] of remoteDragElements)if(!activeDrags.has(cardId)){element.remove();remoteDragElements.delete(cardId);}
     if(activeDrags.size){let layer=$('#remote-drag-layer');if(!layer){layer=document.createElement('div');layer.id='remote-drag-layer';layer.className='remote-drag-layer';$('#table-world').append(layer);}for(const [cardId,drag] of activeDrags){let element=remoteDragElements.get(cardId);if(!element){element=makeCard(drag.card,'battlefield');element.classList.add('remote-card-being-dragged');layer.append(element);remoteDragElements.set(cardId,element);}Object.assign(element.style,{position:'absolute',left:`${drag.x}px`,top:`${drag.y}px`,width:`${drag.width}px`,height:`${drag.height}px`,flex:'none',margin:'0',transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:'10001'});}}
     else $('#remote-drag-layer')?.remove();

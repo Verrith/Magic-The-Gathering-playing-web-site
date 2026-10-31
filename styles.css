@@ -101,6 +101,9 @@
 .search-deck-cards{height:auto;flex:1;min-height:0}
 @media(max-width:900px){.search-deck-controls{flex-wrap:wrap}.search-find{flex:1 1 225px}.search-order{flex:1 1 160px}.search-reveal{flex:1 1 175px}.search-deck-controls #search-deck-shuffle{margin:18px 0 0 auto}}
 @media(max-width:650px){.search-deck-cards{height:auto;flex:1;min-height:0}}
+.search-deck-dialog.graveyard-browser .search-deck-cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.search-deck-dialog.graveyard-browser .search-deck-card{height:365px}
+@media(max-width:650px){.search-deck-dialog.graveyard-browser .search-deck-cards{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.search-deck-dialog.graveyard-browser .search-deck-card{height:270px}}
 
 /* Shared-room status, combat selection, and opponent hand backs. */
 .stack-strip{max-width:min(76vw,620px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#aeb6c2;font:8px/1.5 Inter,sans-serif;letter-spacing:.08em;padding-top:4px;border-top:1px solid #ffffff12;margin-top:4px}

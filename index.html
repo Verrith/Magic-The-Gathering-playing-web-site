@@ -13,10 +13,10 @@
   <title>MTG Table — joue à Magic avec tes amis</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=table-logo-20261026-37">
   <link rel="preconnect" href="https://api.scryfall.com"><link rel="preconnect" href="https://cards.scryfall.io">
-  <link rel="stylesheet" href="./styles.css?v=player-default-20261026-36">
+  <link rel="stylesheet" href="./styles.css?v=graveyard-cards-20261030-1">
   <!-- Fallback for GitHub Pages deployments that publish the repository root instead of Vite's dist artifact. -->
   <script type="importmap">{"imports":{"yjs":"https://esm.sh/yjs@13.6.27","y-webrtc":"https://esm.sh/y-webrtc@10.2.3?external=yjs"}}</script>
-  <script type="module" src="./app.js?v=mouse-anchor-point-20261027-44"></script>
+  <script type="module" src="./app.js?v=game-reset-20261030-1"></script>
 </head>
 <body>
   <header class="topbar">
@@ -32,7 +32,7 @@
     </aside>
 
     <section class="game-stage">
-    <div class="game-actions" id="game-actions"><div class="action-caption" id="turn-label">TABLE LOCALE</div><div class="action-buttons"><button id="ready-btn" type="button">Ready up</button><button id="combat-btn" class="hidden" type="button">Declare attackers</button><button id="untap-all">Dégager tout</button><button id="draw">Piocher</button><button id="pass-turn">Pass priority</button><div class="action-menu"><button id="actions-toggle">Actions⌄</button><div class="menu-pop" id="actions-menu"><button id="shuffle">Mélanger la bibliothèque</button><button id="reveal-hand-action">Révéler ma main</button><button id="reveal-hand-count-action">Révéler X cartes de ma main</button><button id="zone-requests-open" class="hidden">Demandes de zones</button><button id="commands-menu-open">Palette de commandes</button><button id="life-plus-menu">Gagner 1 point de vie</button><button id="life-minus-menu">Perdre 1 point de vie</button><button id="new-room">Créer une salle privée</button></div></div><div class="action-menu"><button id="create-toggle">Créer⌄</button><div class="menu-pop" id="create-menu"><button id="token-btn">Créer un jeton</button><button id="counter-btn">Ajouter un dé sur la table</button><button id="copy-top-card">Copier la carte survolée</button></div></div></div><div id="stack-strip" class="stack-strip" aria-live="polite"></div></div>
+    <div class="game-actions" id="game-actions"><div class="action-caption" id="turn-label">TABLE LOCALE</div><div class="action-buttons"><button id="ready-btn" type="button">Ready up</button><button id="combat-btn" class="hidden" type="button">Declare attackers</button><button id="untap-all">Dégager tout</button><button id="draw">Piocher</button><button id="pass-turn">Pass priority</button><div class="action-menu"><button id="actions-toggle">Actions⌄</button><div class="menu-pop" id="actions-menu"><button id="shuffle">Mélanger la bibliothèque</button><button id="game-reset-action">Recommencer la partie · 7 cartes</button><button id="reveal-hand-action">Révéler ma main</button><button id="reveal-hand-count-action">Révéler X cartes de ma main</button><button id="zone-requests-open" class="hidden">Demandes de zones</button><button id="commands-menu-open">Palette de commandes</button><button id="life-plus-menu">Gagner 1 point de vie</button><button id="life-minus-menu">Perdre 1 point de vie</button><button id="new-room">Créer une salle privée</button></div></div><div class="action-menu"><button id="create-toggle">Créer⌄</button><div class="menu-pop" id="create-menu"><button id="token-btn">Créer un jeton</button><button id="counter-btn">Ajouter un dé sur la table</button><button id="copy-top-card">Copier la carte survolée</button></div></div></div><div id="stack-strip" class="stack-strip" aria-live="polite"></div></div>
 
       <div class="playmat" id="playmat" aria-label="Grande table de jeu; faites glisser le fond pour vous déplacer et utilisez la molette pour zoomer">
         <div class="table-world" id="table-world">

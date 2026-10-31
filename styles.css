@@ -132,7 +132,7 @@
 .player-mat .life-row #life-total{flex:1;min-width:30px;width:42px;margin:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:20px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
 .player-mat .life-row #life-total::-webkit-inner-spin-button,.player-mat .life-row #life-total::-webkit-outer-spin-button,.seat-life-input::-webkit-inner-spin-button,.seat-life-input::-webkit-outer-spin-button{appearance:none;margin:0}
 .seat-life-controls{display:flex;align-items:center;gap:4px;margin-top:3px}
-.seat-life-controls>button{width:20px;height:20px;padding:0;border:1px solid #536576;border-radius:4px;background:#182533;color:#e3edf8;font-size:13px;line-height:1}
+.seat-life-controls>button{display:grid;place-items:center;width:20px;height:20px;padding:0;border:1px solid #536576;border-radius:4px;background:#182533;color:#e3edf8;font-size:13px;line-height:1;text-align:center}
 .seat-life-controls>button:hover{background:#2a3e52}
 .seat-life-controls label{display:flex;align-items:baseline;gap:3px}
 .seat-life-controls .seat-life-input{width:42px;min-width:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:19px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}

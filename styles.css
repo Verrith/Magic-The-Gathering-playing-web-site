@@ -431,3 +431,4 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 /* The large transformed table is transparent, but its GPU backing must have a
    stable dark fill to avoid blank yellow compositor frames in some browsers. */
 .playmat{will-change:auto!important;background:#08170f radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px!important}
+.own-mat .life-row button{display:grid;place-items:center;padding:0;line-height:1;text-align:center}

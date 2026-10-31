@@ -386,6 +386,7 @@ dialog.room-format-modal .format-option small{font-size:11px;line-height:1.45}
 dialog.room-format-modal .modal-actions{flex:none;padding:15px 24px 19px;background:#12141966}
 dialog.room-format-modal .icon-button{width:34px;height:34px;border:1px solid #424752;border-radius:10px;background:#20232a;color:#aeb5c1;font-size:22px;line-height:1;transition:.16s}
 dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
+@media(max-width:650px){.top-right .top-outline{width:30px;height:30px;padding:0;display:grid;place-items:center;font-size:0!important}.top-right #new-game-button::before{content:"+";font-size:16px}.top-right #copy-link::before{content:"⧉";font-size:14px}.top-right #leave-room::before{content:"↪";font-size:15px}}
 @media(max-width:520px){dialog.room-format-modal .modal-head{padding:20px 18px 12px}dialog.room-format-modal .settings-content{padding:2px 18px 15px}dialog.room-format-modal .format-option{padding:14px}dialog.room-format-modal .modal-actions{padding:12px 18px 16px}}
 
 /* Give hovered hand cards a reserved lift gutter so their top edge never clips. */

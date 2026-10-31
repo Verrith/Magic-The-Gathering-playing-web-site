@@ -13,15 +13,15 @@
   <title>MTG Table — joue à Magic avec tes amis</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=table-logo-20261026-37">
   <link rel="preconnect" href="https://api.scryfall.com"><link rel="preconnect" href="https://cards.scryfall.io">
-  <link rel="stylesheet" href="./styles.css?v=room-dialog-close-20261030-1">
+  <link rel="stylesheet" href="./styles.css?v=archive-toolbar-20261031-7">
   <!-- Fallback for GitHub Pages deployments that publish the repository root instead of Vite's dist artifact. -->
   <script type="importmap">{"imports":{"yjs":"https://cdn.jsdelivr.net/npm/yjs@13.5.35/+esm","y-webrtc":"https://cdn.jsdelivr.net/npm/y-webrtc@10.2.3/+esm"}}</script>
-  <script type="module" src="./app.js?v=relative-live-drag-20261031-6"></script>
+  <script type="module" src="./app.js?v=archive-integrated-20261031-7"></script>
 </head>
 <body>
   <header class="topbar">
     <div class="top-left"><div class="brand-lockup" aria-label="MTG Table"><svg class="brand-mark" viewBox="0 0 40 40" role="img" aria-label="Logo MTG Table"><defs><linearGradient id="brand-fill" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#70e2b1"/><stop offset="1" stop-color="#4385f5"/></linearGradient></defs><path d="M20 2.5 35.2 11v18L20 37.5 4.8 29V11L20 2.5Z" fill="url(#brand-fill)"/><path d="M20 7.5 30.5 13.4v13.2L20 32.5 9.5 26.6V13.4L20 7.5Z" fill="#101719"/><path d="m20 12 2.15 5.85L28 20l-5.85 2.15L20 28l-2.15-5.85L12 20l5.85-2.15L20 12Z" fill="#f4e7b3"/><circle cx="20" cy="20" r="2" fill="#fff"/></svg><span class="brand-name">MTG <b>TABLE</b></span></div><button class="aura-button deck-button" id="open-decks">📚 <span>Choisir un deck</span></button><button class="toolbar-button" id="command-open" aria-label="Rechercher dans la bibliothèque">⌕ <span>⌘K</span></button><button class="toolbar-button log-open" id="log-open" aria-label="Ouvrir le journal">☰</button><button class="toolbar-button" id="help-btn">Aide</button></div>
-    <div class="top-right"><span class="connection-pill"><i class="status-dot" id="connection-dot"></i><span id="connection-label">Local</span></span><button class="top-outline" id="new-game-button">Nouvelle room ↗</button><button class="top-outline" id="copy-link">Copier le lien ⧉</button><button class="top-outline" id="leave-room">Quitter</button><button class="top-icon" id="settings-btn" title="Paramètres">⚙</button></div>
+    <div class="top-right"><span class="connection-pill"><i class="status-dot" id="connection-dot"></i><span id="connection-label">Local</span></span><button class="top-outline" id="new-game-button" aria-label="Nouvelle room">Nouvelle room ↗</button><button class="top-outline" id="copy-link" aria-label="Copier le lien d’invitation">Copier le lien ⧉</button><button class="top-outline" id="leave-room" aria-label="Quitter la room">Quitter</button><button class="top-icon" id="settings-btn" title="Paramètres">⚙</button></div>
   </header>
 
   <main class="game-shell">

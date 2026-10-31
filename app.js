@@ -398,7 +398,16 @@ import './config.js';
   function mutateLocalCard(card,zone,fn,message){fn(card);save();render();syncCard(card,zone);if(message)logAction(message);}
   function toggleHovered(action,targetCardId=hoveredCardId){const found=findLocalCard(targetCardId);if(!found){toast('Survolez une de vos cartes.');return;}const {card,zone}=found;if(action==='tap'){if(zone!=='battlefield')return;mutateLocalCard(card,zone,c=>c.tapped=!c.tapped,`${card.tapped?'untapped':'tapped'} ${card.name}`);}else if(action==='sick'){if(zone!=='battlefield')return;mutateLocalCard(card,zone,c=>c.summoningSick=!c.summoningSick,`${card.name}: ${card.summoningSick?'summoning sickness removed':'summoning sick'}`);}else if(action==='flip'){mutateLocalCard(card,zone,c=>{if(canFlipCard(c))c.faceIndex=((c.faceIndex||0)+1)%c.faces.length;else c.facedown=!c.facedown;},`${canFlipCard(card)?'flipped':'turned face down/up'} ${card.name}`);}else if(['counter+','counter-','minus-counter+','minus-counter-'].includes(action)){const field=action.startsWith('minus-')?'minusCounters':'counters',adding=action.endsWith('+');mutateLocalCard(card,zone,c=>{c[field]=Math.max(0,(Number(c[field])||0)+(adding?1:-1));},`${adding?'added':'removed'} a ${field==='counters'?'+1/+1':'-1/-1'} counter ${adding?'to':'from'} ${card.name}`);}}
   function untapLocal(){const cards=state.battlefield.filter(c=>cardControllerId(c)===localPlayerId);cards.forEach(c=>c.tapped=false);save();render();cards.forEach(c=>syncCard(c,'battlefield'));logAction('a dégagé toutes ses cartes');}
-  function toggleCardTap(card){card.tapped=!card.tapped;save();render();syncCard(card,'battlefield');logAction(`${card.tapped?'a engagé':'a dégagé'} ${card.name}`);}
+  function toggleCardTap(card){
+    // A card on another player's mat is still represented by this shared Yjs entry.
+    // Update that entry first, preserving its owner/controller, so a remote tap cannot
+    // briefly render a local-only version (or leave a drag preview looking like a ghost).
+    const current=room&&sharedCards?.get(card.id)?.zone==='battlefield'?sharedCards.get(card.id):card;
+    const tapped=!current.tapped,updated={...current,tapped};
+    if(room&&sharedCards){p2pDoc.transact(()=>sharedCards.set(card.id,updated));}
+    else card.tapped=tapped;
+    save();render();logAction(`${tapped?'a engagé':'a dégagé'} ${updated.name}`);
+  }
   function cloneCard(card,zone){const copy={...card,id:id(),controllerId:localPlayerId,name:`${card.name} — copie`,tapped:false,attacking:false,blocking:null,blockers:[],counters:card.counters||0};state[zone].push(copy);save();render();syncCard(copy,zone);logAction(`a copié ${card.name}`);}
   function boardPointAt(clientX,clientY){const rect=$('#player-board').getBoundingClientRect();return {x:Math.max(2,Math.min(96,(clientX-rect.left)/rect.width*100)),y:Math.max(2,Math.min(96,(clientY-rect.top)/rect.height*100))};}
   function createDeckToken(source,position){const art=exactPrintArt(source),token={...source,...art,id:id(),qty:undefined,section:undefined,ownerId:localPlayerId,originalOwnerId:localPlayerId,controllerId:localPlayerId,zone:'battlefield',isCommander:false,isToken:true,tapped:false,facedown:false,summoningSick:false,counters:0,counterTypes:{},counterMarker:'',attacking:false,blocking:null,blockers:[],attachedTo:null,x:position?.x??48,y:position?.y??48};state.battlefield.push(token);save();render();syncCard(token,'battlefield');logAction(`a créé un jeton ${token.name}`);}

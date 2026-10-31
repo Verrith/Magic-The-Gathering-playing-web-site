@@ -427,6 +427,10 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 
 /* Compact game identity in the top-left toolbar. */
 .brand-lockup{display:flex;align-items:center;gap:8px;flex:none;padding-right:4px;color:#e7edf2;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+
+/* The large transformed table is transparent, but its GPU backing must have a
+   stable dark fill to avoid blank yellow compositor frames in some browsers. */
+.playmat{will-change:auto!important;background:#08170f radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px!important}
 .brand-mark{display:block;width:34px;height:34px;filter:drop-shadow(0 2px 6px #48c89942)}
 .brand-name b{color:#7bdcb0;font-weight:800}
 @media(max-width:1000px){.brand-lockup{gap:0;padding-right:0}.brand-name{display:none}.top-left{gap:8px}}

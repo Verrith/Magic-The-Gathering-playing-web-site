@@ -353,7 +353,7 @@
 .own-mat .life-row{display:flex;align-items:center;gap:4px;width:100%;padding:0;border:0;background:transparent}
 .own-mat .life-row #life-total{flex:1;min-width:30px;width:40px;font-size:18px;font-weight:700;text-align:center;color:color-mix(in srgb,var(--player-color) 82%,#fff)}
 .own-mat .life-row small{font-size:7px;color:#9aa8a1}
-.own-mat .life-row button{flex:0 0 18px;width:18px;height:18px;border:1px solid #526578;border-radius:4px;background:#172330;color:#d5e0ec;font-size:12px}
+.own-mat .life-row button{display:flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;padding:0;border:1px solid #526578;border-radius:4px;background:#172330;color:#d5e0ec;font-family:Arial,sans-serif;font-size:13px;line-height:18px;text-align:center}
 .own-mat .life-counter-note{padding-left:2px;color:#95a59a;font-size:6px;line-height:1}
 .seat-hand-open{border-top:1px solid #ffffff18}
 .seat-piles{gap:3px}

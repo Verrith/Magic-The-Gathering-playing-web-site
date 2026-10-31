@@ -9,7 +9,7 @@ import './config.js';
   const STORE='mtg-table-state-v1', CACHE='mtg-table-scryfall-v3', PLAYER_SESSIONS='mtg-table-player-sessions-v1', PLAYER_TAB='mtg-table-player-tab-v1', ROOM_SEATS='mtg-table-room-seats-v1', ACTIONS_POSITION='mtg-table-actions-position-v1';
   const DISCONNECTED_BOARD_CLEANUP_MS=5*60*1000;
   let room=null,p2pDoc=null,p2pProvider=null,sharedPlayers=null,sharedCards=null,sharedLog=null,sharedGame=null,sharedRequests=null,importRows=[],toastTimer,lastScryfallRequest=0,lastLibraryNoticeId='',viewerZone='library',viewerOwnerId=null,viewerAccessRequestId=null,libraryView='top',searchDeckOrder='top',searchReveal='none',searchSourceZone='library',remoteLibraryOwnerId=null,activeSearchCardId=null,selectedBlockerId=null,hoveredCardId=null,blankMenuPosition=null,stalePlayerTimers=new Map(),awarenessPlayersSignature='',lastCursorSentAt=0,roomConnectTimer=null,roomConnectTimedOut=false,consumedLifePress=null,localRoomPlayerAliases=[];
-  let lastPointerPosition=null,activeCardDrag=null,lastCardDragSentAt=0;const remoteDragElements=new Map();
+  let lastPointerPosition=null,activeCardDrag=null;
   const processedZoneRequests=new Set();
   const inactiveCleanupDone=new Set();
   const PHASES=['Untap','Upkeep','Main 1','Combat','Main 2','End'];
@@ -244,7 +244,6 @@ import './config.js';
     const boardAt=(event,fallback)=>document.elementFromPoint(event.clientX,event.clientY)?.closest('.player-mat')||fallback;
     const followBoard=(drag,event)=>{const board=boardAt(event,drag.originBoard);drag.board=board;drag.targetControllerId=board.id==='player-board'?localPlayerId:(board.dataset.playerId||drag.originControllerId||localPlayerId);};
     const liftObject=(drag)=>{const style=getComputedStyle(drag.element),zoom=Number(mat.dataset.zoom)||1,width=drag.from==='hand'?drag.boardWidth/zoom:(Number.parseFloat(style.width)||54),height=drag.from==='hand'?drag.boardHeight/zoom:(Number.parseFloat(style.height)||76),rotation=drag.card.tapped?' rotate(90deg)':drag.card.summoningSick?' rotate(30deg)':'';drag.worldCardWidth=width;drag.worldCardHeight=height;if(drag.from==='hand'){drag.placeholder=document.createElement('div');drag.placeholder.className='hand-drag-placeholder';Object.assign(drag.placeholder.style,{width:`${drag.handWidth}px`,height:`${drag.handHeight}px`,flex:`0 0 ${drag.handWidth}px`});drag.parent.insertBefore(drag.placeholder,drag.element);}if(drag.card.counterMarker){drag.card.attachedTo=null;drag.card.offsetX=0;drag.card.offsetY=0;drag.card.x=drag.originX;drag.card.y=drag.originY;}drag.world.append(drag.element);Object.assign(drag.element.style,{position:'absolute',width:`${width}px`,height:`${height}px`,flex:'none',margin:'0',transform:`translate(-50%,-50%)${rotation}`,pointerEvents:'none',zIndex:'10000'});};
-    const publishDrag=(drag)=>{if(!p2pProvider||!Number.isFinite(drag.worldX)||!Number.isFinite(drag.worldY))return;p2pProvider.awareness.setLocalStateField('cardDrag',{id:drag.card.id,x:drag.worldX,y:drag.worldY,width:drag.worldCardWidth,height:drag.worldCardHeight,card:publicCard({...drag.card,controllerId:drag.targetControllerId||drag.originControllerId||localPlayerId,zone:'battlefield'},'battlefield')});};
     mat.addEventListener('pointerdown',event=>{
       const element=event.target.closest('.magic-card[data-card-id]');if(event.button!==0||!element||event.target.closest('button,a,input,select'))return;
       const card=state.battlefield.find(item=>item.id===element.dataset.cardId);if(!card)return;
@@ -259,9 +258,8 @@ import './config.js';
       const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;
       if(!drag.started){if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)<1)return;drag.started=true;drag.card.dragging=true;hideHoverCard();drag.element.classList.add('card-being-dragged');liftObject(drag);drag.element.setPointerCapture?.(event.pointerId);}
       event.preventDefault();followBoard(drag,event);positionAt(drag,event);
-      if(p2pProvider&&Date.now()-lastCardDragSentAt>=25){lastCardDragSentAt=Date.now();publishDrag(drag);}
     },{passive:false});
-    const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;p2pProvider?.awareness.setLocalStateField('cardDrag',null);if(!drag.started)return;
+    const finish=(event,cancelled=false)=>{const drag=activeCardDrag;if(!drag||event.pointerId!==drag.pointerId)return;activeCardDrag=null;if(!drag.started)return;
       if(!cancelled)followBoard(drag,event);if(drag.from==='hand'){
         suppressDragClick(drag.card.id);if(cancelled){drag.card.dragging=false;drag.card.controllerId=drag.originControllerId;sharedCards?.delete(drag.card.id);drag.element.classList.remove('card-being-dragged');drag.element.setAttribute('style',drag.originalStyle||'');const parent=drag.placeholder?.parentElement;if(parent)parent.insertBefore(drag.element,drag.placeholder);drag.placeholder?.remove();if(!parent)render();return;}
         const target=document.elementFromPoint(event.clientX,event.clientY),destination=target?.closest('.zone[data-zone]:not([data-zone="battlefield"])')?.dataset.zone,rect=drag.board.getBoundingClientRect(),onBoard=event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom;
@@ -282,14 +280,10 @@ import './config.js';
   }
   function renderRemoteCursors(){
     $$('.remote-cursor').forEach(el=>el.remove());
-    if(!p2pProvider){remoteDragElements.forEach(el=>el.remove());remoteDragElements.clear();return;}
-    const activeDrags=new Map([...p2pProvider.awareness.getStates().values()].filter(awareness=>awareness.player?.id&&awareness.player.id!==localPlayerId&&awareness.cardDrag?.id&&awareness.cardDrag.card).map(awareness=>[awareness.cardDrag.id,awareness.cardDrag]));
-    // Keep the shared card visible at its last confirmed position while the drag
-    // preview follows the remote pointer. If the final awareness packet is lost,
-    // the original card can no longer stay hidden indefinitely.
-    for(const [cardId,element] of remoteDragElements)if(!activeDrags.has(cardId)){element.remove();remoteDragElements.delete(cardId);}
-    if(activeDrags.size){let layer=$('#remote-drag-layer');if(!layer){layer=document.createElement('div');layer.id='remote-drag-layer';layer.className='remote-drag-layer';$('#table-world').append(layer);}for(const [cardId,drag] of activeDrags){let element=remoteDragElements.get(cardId);if(!element){element=makeCard(drag.card,'battlefield');element.classList.add('remote-card-being-dragged');layer.append(element);remoteDragElements.set(cardId,element);}Object.assign(element.style,{position:'absolute',left:`${drag.x}px`,top:`${drag.y}px`,width:`${drag.width}px`,height:`${drag.height}px`,flex:'none',margin:'0',transform:'translate(-50%,-50%)',pointerEvents:'none',zIndex:'10001'});}}
-    else $('#remote-drag-layer')?.remove();
+    // Remote drag previews used transient awareness state and could obscure a
+    // shared card when clients received pointer updates out of order. Keep the
+    // last confirmed card in place until the final Yjs card update arrives.
+    $('#remote-drag-layer')?.remove();
     for(const awareness of p2pProvider.awareness.getStates().values()){
       const player=awareness.player,cursor=awareness.cursor;
       if(!player?.id||player.id===localPlayerId||!cursor||!Number.isFinite(cursor.x)||!Number.isFinite(cursor.y))continue;

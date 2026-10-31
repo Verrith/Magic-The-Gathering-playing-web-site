@@ -13,6 +13,8 @@ npm run dev
 
 Open the printed URL in two browser tabs. In the first tab, click **New room**, choose Standard or Commander, and copy the invite link. Open it in the second tab, load a deck in each tab, and click **Ready up** in both. Rooms support up to four players and share the chosen format and starting life total: Standard starts everyone at 20 life; Commander starts everyone at 40 and moves the first card in the imported list into the Command Zone. The board seats follow join order: first at upper left, second below, third to the right of the first, fourth below the third. Drag cards anywhere on the shared table, including outside your own board; each player's board color affects its felt, frame, and life panel. Click anywhere on the blue library pile to open the deck view; use the Piocher button to draw one card, or right-click for the library actions. For local testing both clients can share the same browser `localStorage`; the app independently shuffles each loaded deck when entering a room.
 
+Each browser tab has its own player identity and session snapshot, so two tabs can play independently in the same room. Reloading a tab restores its identity and private zones instead of reading the other tab's last saved hand. Decks remain saved in `localStorage` for future visits.
+
 Deck import accepts one card per line (`Lightning Bolt`) or quantities (`4x Lightning Bolt`, `4 x Lightning Bolt`, or `4 Lightning Bolt`). A 60-card list is recommended for Standard and 100 cards for Commander. Card names are looked up through Scryfall; unmatched names are shown in the import review UI. For Commander, the first parsed card is the commander even when the export does not label a Commander section; one copy is removed from the library.
 
 The Moxfield importer accepts a public deck URL and uses Moxfield's selected printing and card data. Art is loaded by that printing's Scryfall UUID: Moxfield's CDN face IDs can resolve to an unrelated card (for example, Ultimecia's face ID returned Gilt-Leaf Seer). Existing imported decks are corrected locally when the app loads, and importing the same Moxfield link updates that saved deck. The import works on GitHub Pages out of the box through the public `cors.tools` GET relay because Moxfield does not permit direct browser reads from another origin. Only the public Moxfield deck URL is sent to that relay; room discovery and all game state remain P2P. The free relay has response/time limits and is an external dependency. For a self-hosted relay, the repository also includes a narrow Cloudflare Worker in `worker/`.
@@ -82,13 +84,16 @@ The TURN credentials in `config.js` are shipped to every browser, so use credent
 ## Build and deploy
 
 ```sh
+npm test
 npm run build
 npm run preview
 ```
 
 The Vite build uses the repository path `/Magic-The-Gathering-playing-web-site/` for GitHub Pages. The workflow in `.github/workflows/pages.yml` builds and deploys the static `dist/` directory on pushes to `main`. For a different host/path, adjust the `--base` value in `package.json`.
 
-No database, environment variables, cookies, or authentication are used by the P2P game runtime. The legacy `supabase/` and `config*.js` files are not loaded by the app.
+The regression tests use Node's built-in test runner and real Yjs documents, with browser rendering stubbed. They cover stale card actions, counter synchronization, attacker selection, independent tabs, and reload recovery. Pull requests run tests and build in CI; the Pages deployment also runs tests before building.
+
+No database, environment variables, cookies, or authentication are used by the P2P game runtime. The legacy `supabase/` directory is not used by the app. `config.js` supplies optional signaling, TURN, and Moxfield relay settings.
 
 ## Existing table tools
 

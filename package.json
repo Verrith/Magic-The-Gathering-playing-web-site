@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node --test",
     "build": "vite build --base=/Magic-The-Gathering-playing-web-site/",
     "preview": "vite preview"
   },

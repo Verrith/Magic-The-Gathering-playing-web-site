@@ -101,9 +101,6 @@
 .search-deck-cards{height:auto;flex:1;min-height:0}
 @media(max-width:900px){.search-deck-controls{flex-wrap:wrap}.search-find{flex:1 1 225px}.search-order{flex:1 1 160px}.search-reveal{flex:1 1 175px}.search-deck-controls #search-deck-shuffle{margin:18px 0 0 auto}}
 @media(max-width:650px){.search-deck-cards{height:auto;flex:1;min-height:0}}
-.search-deck-dialog.graveyard-browser .search-deck-cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
-.search-deck-dialog.graveyard-browser .search-deck-card{height:365px}
-@media(max-width:650px){.search-deck-dialog.graveyard-browser .search-deck-cards{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.search-deck-dialog.graveyard-browser .search-deck-card{height:270px}}
 
 /* Shared-room status, combat selection, and opponent hand backs. */
 .stack-strip{max-width:min(76vw,620px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;color:#aeb6c2;font:8px/1.5 Inter,sans-serif;letter-spacing:.08em;padding-top:4px;border-top:1px solid #ffffff12;margin-top:4px}
@@ -132,7 +129,7 @@
 .player-mat .life-row #life-total{flex:1;min-width:30px;width:42px;margin:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:20px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
 .player-mat .life-row #life-total::-webkit-inner-spin-button,.player-mat .life-row #life-total::-webkit-outer-spin-button,.seat-life-input::-webkit-inner-spin-button,.seat-life-input::-webkit-outer-spin-button{appearance:none;margin:0}
 .seat-life-controls{display:flex;align-items:center;gap:4px;margin-top:3px}
-.seat-life-controls>button{display:flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:1px solid #536576;border-radius:4px;background:#182533;color:#e3edf8;font-family:Arial,sans-serif;font-size:15px;line-height:20px;text-align:center}
+.seat-life-controls>button{width:20px;height:20px;padding:0;border:1px solid #536576;border-radius:4px;background:#182533;color:#e3edf8;font-size:13px;line-height:1}
 .seat-life-controls>button:hover{background:#2a3e52}
 .seat-life-controls label{display:flex;align-items:baseline;gap:3px}
 .seat-life-controls .seat-life-input{width:42px;min-width:0;padding:0;border:0;background:transparent;color:color-mix(in srgb,var(--player-color) 76%,#ffffff);font-size:19px;font-weight:700;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield}
@@ -353,7 +350,7 @@
 .own-mat .life-row{display:flex;align-items:center;gap:4px;width:100%;padding:0;border:0;background:transparent}
 .own-mat .life-row #life-total{flex:1;min-width:30px;width:40px;font-size:18px;font-weight:700;text-align:center;color:color-mix(in srgb,var(--player-color) 82%,#fff)}
 .own-mat .life-row small{font-size:7px;color:#9aa8a1}
-.own-mat .life-row button{display:flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px;padding:0;border:1px solid #526578;border-radius:4px;background:#172330;color:#d5e0ec;font-family:Arial,sans-serif;font-size:13px;line-height:18px;text-align:center}
+.own-mat .life-row button{flex:0 0 18px;width:18px;height:18px;border:1px solid #526578;border-radius:4px;background:#172330;color:#d5e0ec;font-size:12px}
 .own-mat .life-counter-note{padding-left:2px;color:#95a59a;font-size:6px;line-height:1}
 .seat-hand-open{border-top:1px solid #ffffff18}
 .seat-piles{gap:3px}
@@ -370,7 +367,7 @@
 .token-picker-menu{width:260px;max-height:min(70vh,520px);overflow:auto;display:flex;flex-direction:column;gap:3px}.token-picker-title{padding:8px 10px;color:#aab8cb;font-size:10px;letter-spacing:.14em}.token-picker-menu .token-picker-option{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:9px;min-height:48px;text-align:left}.token-picker-option img,.token-picker-placeholder{width:36px;height:46px;border-radius:4px;object-fit:cover;background:#1a2536}.token-picker-placeholder{display:grid;place-items:center}.token-picker-option>span:nth-child(2){white-space:normal}.token-picker-option small{color:#aab8cb}
 
 /* Compact format chooser shown at the clean, room-less URL. */
-dialog.room-format-modal[open]{width:min(480px,calc(100vw - 24px));height:fit-content!important;min-height:0!important;max-height:calc(100dvh - 24px);padding:0;overflow:hidden;display:flex;flex:none;flex-direction:column;border:1px solid #414653;border-radius:18px;background:radial-gradient(ellipse at 12% 0%,#24334b 0,transparent 42%),#17191f;box-shadow:0 30px 100px #000d,0 0 55px #4385f51a}
+dialog.room-format-modal{width:min(480px,calc(100vw - 24px));height:fit-content!important;min-height:0!important;max-height:calc(100dvh - 24px);padding:0;overflow:hidden;display:flex;flex:none;flex-direction:column;border:1px solid #414653;border-radius:18px;background:radial-gradient(ellipse at 12% 0%,#24334b 0,transparent 42%),#17191f;box-shadow:0 30px 100px #000d,0 0 55px #4385f51a}
 dialog.room-format-modal .modal-head{flex:none;padding:23px 24px 16px}
 dialog.room-format-modal .modal-head h2{font-size:24px;letter-spacing:-.035em}
 dialog.room-format-modal .modal-head p{max-width:350px;line-height:1.55}
@@ -386,7 +383,6 @@ dialog.room-format-modal .format-option small{font-size:11px;line-height:1.45}
 dialog.room-format-modal .modal-actions{flex:none;padding:15px 24px 19px;background:#12141966}
 dialog.room-format-modal .icon-button{width:34px;height:34px;border:1px solid #424752;border-radius:10px;background:#20232a;color:#aeb5c1;font-size:22px;line-height:1;transition:.16s}
 dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
-@media(max-width:650px){.top-right .top-outline{width:30px;height:30px;padding:0;display:grid;place-items:center;font-size:0!important}.top-right #new-game-button::before{content:"+";font-size:16px}.top-right #copy-link::before{content:"⧉";font-size:14px}.top-right #leave-room::before{content:"↪";font-size:15px}}
 @media(max-width:520px){dialog.room-format-modal .modal-head{padding:20px 18px 12px}dialog.room-format-modal .settings-content{padding:2px 18px 15px}dialog.room-format-modal .format-option{padding:14px}dialog.room-format-modal .modal-actions{padding:12px 18px 16px}}
 
 /* Give hovered hand cards a reserved lift gutter so their top edge never clips. */
@@ -427,10 +423,6 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 
 /* Compact game identity in the top-left toolbar. */
 .brand-lockup{display:flex;align-items:center;gap:8px;flex:none;padding-right:4px;color:#e7edf2;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
-
-/* The large transformed table is transparent, but its GPU backing must have a
-   stable dark fill to avoid blank yellow compositor frames in some browsers. */
-.playmat{will-change:auto!important;background:#08170f radial-gradient(#b9d8c322 .75px,transparent .8px) 0 0/17px 17px!important}
 .brand-mark{display:block;width:34px;height:34px;filter:drop-shadow(0 2px 6px #48c89942)}
 .brand-name b{color:#7bdcb0;font-weight:800}
 @media(max-width:1000px){.brand-lockup{gap:0;padding-right:0}.brand-name{display:none}.top-left{gap:8px}}

@@ -2,8 +2,6 @@
 
 A static, peer-to-peer Magic: The Gathering tabletop. Players connect directly through WebRTC, share public game state with Yjs, and use Scryfall for card data and images. No account or game server is required.
 
-Play online: [MTG Table](https://verrith.github.io/Magic-The-Gathering-playing-web-site/)
-
 ## Run locally
 
 Requirements: Node.js 20+ and npm.

@@ -404,6 +404,10 @@ dialog.room-format-modal .icon-button:hover{background:#303743;color:white}
 /* Keep the hand row inside its tray horizontally while preserving vertical hover lift. */
 .hand-cards{overflow-x:clip!important;overflow-y:visible!important}
 
+/* Show the same striped star back in hidden hand slots. */
+.opponent-hand i{position:relative;display:grid;place-items:center}
+.opponent-hand i:after{content:'✦';color:color-mix(in srgb,var(--player-color,#22c55e) 18%,#dce8ff);font-size:7px;line-height:1;text-shadow:0 1px 2px #00102f}
+
 .token-picker-empty{padding:12px 10px;color:#9ca3af;font-size:12px;line-height:1.45}
 
 /* Aura-like direct dragging for cards already on the battlefield. */

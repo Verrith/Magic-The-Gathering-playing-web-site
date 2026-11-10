@@ -138,13 +138,15 @@ import './config.js';
   function parseDeck(text){
     const rows=[];let section='Mainboard';
     const aliases={main:'Mainboard',mainboard:'Mainboard',deck:'Mainboard',commander:'Commander',commanders:'Commander',sideboard:'Sideboard',side:'Sideboard',companion:'Companion',maybeboard:'Maybeboard',considering:'Maybeboard',wishboard:'Wishboard',tokens:'Tokens'};
+    const sectionFromHeading=value=>{const heading=String(value||'').trim().replace(/^\[(.*)\]$/,'$1').replace(/\s*\(\s*\d+\s*(?:cards?)?\s*\)\s*$/i,'').replace(/\s*:\s*$/,'').trim().toLowerCase();return aliases[heading]||null;};
     for(const raw of text.split(/\r?\n/)){
       const line=raw.trim();if(!line)continue;
       const commentHeading=line.match(/^\/\/\s*(.*?)\s*$/);
-      if(commentHeading){const key=commentHeading[1].toLowerCase();if(aliases[key])section=aliases[key];continue;}
-      if(/^(#|\/\*)/.test(line))continue;
-      const head=line.replace(/^\[|\]$/g,'').replace(/:$/,'').trim().toLowerCase();
-      if(aliases[head]){section=aliases[head];continue;}
+      if(commentHeading){const heading=sectionFromHeading(commentHeading[1]);if(heading)section=heading;continue;}
+      const hashHeading=line.match(/^#\s*(.*?)\s*$/);if(hashHeading){const heading=sectionFromHeading(hashHeading[1]);if(heading)section=heading;continue;}
+      if(/^\/\*/.test(line))continue;
+      const heading=sectionFromHeading(line);
+      if(heading){section=heading;continue;}
       const match=line.match(/^(\d+)\s*[x×]?\s+(.+?)(?:\s+\(([A-Za-z0-9]{2,6})\)\s+([^\s]+))?(?:\s+\*[^*]+\*)?$/);
       if(!match)continue;
       const name=match[2].trim().replace(/\s+\(\*\)\s*$/,'');if(name)rows.push({qty:Math.min(999,Number(match[1])),name,setCode:match[3]?.toLowerCase()||'',collectorNumber:match[4]||'',section,card:null,error:''});

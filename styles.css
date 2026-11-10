@@ -288,12 +288,16 @@
 .remote-commander-zone .zone-label{font-size:6px;color:#e2c17e}
 .remote-commander-zone .card-row{position:absolute;left:6px;right:6px;top:23px;bottom:6px;display:flex;align-items:flex-start;gap:5px;overflow:hidden}
 .remote-commander-zone .magic-card{width:70px;height:98px;flex:0 0 70px}
+/* Keep both partner commanders visible and make the whole pair an easy drop target. */
+.player-mat .commander-zone:has(.magic-card:nth-child(2)){width:166px}
+.player-mat .commander-zone:has(.magic-card:nth-child(2)) .card-row{overflow-x:auto;overflow-y:hidden}
 @media(max-width:650px){
   .hand-zone{height:min(36vh,260px)}
   .remote-commander-zone:has(.magic-card){left:8px;top:103px;width:72px;height:102px;padding:4px}
   .remote-commander-zone .zone-label{font-size:6px}
   .remote-commander-zone .card-row{left:4px;right:4px;top:18px;bottom:4px}
   .remote-commander-zone .magic-card{width:52px;height:73px;flex-basis:52px}
+  .player-mat .commander-zone:has(.magic-card:nth-child(2)){width:124px}
 }
 /* Commander tax stays separate from the number of cards in the command zone. */
 .commander-tax{position:absolute;z-index:4;top:3px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:2px 5px;border:1px solid #f3ca78;border-radius:999px;background:#281d0beF;color:#ffe29c;font-size:9px;font-weight:800;line-height:1.2;box-shadow:0 2px 6px #000b;pointer-events:none}

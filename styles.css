@@ -301,6 +301,16 @@
 }
 /* Commander tax stays separate from the number of cards in the command zone. */
 .commander-tax{position:absolute;z-index:4;top:3px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:2px 5px;border:1px solid #f3ca78;border-radius:999px;background:#281d0beF;color:#ffe29c;font-size:9px;font-weight:800;line-height:1.2;box-shadow:0 2px 6px #000b;pointer-events:none}
+.deck-view-toggle{display:flex;gap:5px;padding:0 23px 8px}
+.deck-view-toggle button{border:1px solid #3b3b42;background:#222227;color:#aaa;border-radius:6px;padding:7px 11px;font-size:10px;font-weight:700}
+.deck-view-toggle button.active{border-color:#5788e1;background:#252b36;color:#dce8ff}
+.picker-decks.card-view{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;max-height:58vh}
+.picker-decks.card-view .deck-item{height:250px;min-width:0;padding:8px;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:7px;text-align:center}
+.picker-decks.card-view .deck-thumb{width:100%;height:100%;min-height:0;object-fit:contain;background:#101014;border-radius:5px}
+.picker-decks.card-view .deck-info{width:100%;min-width:0}
+.picker-decks.card-view .deck-info b{font-size:11px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.picker-decks.card-view .deck-info small{font-size:9px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:650px){.deck-view-toggle{padding:0 14px 8px}.picker-decks.card-view{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;padding:8px 14px 16px}.picker-decks.card-view .deck-item{height:195px;padding:6px;gap:5px}.picker-decks.card-view .deck-info b{font-size:10px}.picker-decks.card-view .deck-info small{font-size:8px}}
 .deck-pile .library-action{width:100%;padding:4px 2px;border-radius:4px;background:#4385f5;color:#fff;text-align:center;font-size:8px;font-weight:700;line-height:1.1;cursor:pointer}
 @media(max-width:650px){.deck-pile .library-action{font-size:7px;padding:3px 1px}}
 .deck-pile{position:relative}

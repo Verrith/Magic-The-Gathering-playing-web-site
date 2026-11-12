@@ -624,7 +624,7 @@ import './config.js';
   async function pipglyphDeckCards(document){
     const rows=[],entries=[...document.querySelectorAll('[data-deck-entry]')];
     for(const entry of entries){
-      const label=entry.getAttribute('aria-label')||'',labelMatch=label.match(/^(.*),\s*(\d+)\s+copies?\b/i),imageElement=entry.querySelector('img'),rawImage=imageElement?.getAttribute('src')||'';
+      const label=entry.getAttribute('aria-label')||'',labelMatch=label.match(/^(.*),\s*(\d+)\s+cop(?:y|ies)\b/i),imageElement=entry.querySelector('img'),rawImage=imageElement?.getAttribute('src')||'';
       if(!labelMatch||!rawImage)continue;
       const name=labelMatch[1].trim(),qty=Math.max(1,Number(labelMatch[2])||1),heading=entry.closest('section')?.querySelector('h3')?.textContent?.trim()||'',section=/^commander\b/i.test(heading)?'Commander':/^companion\b/i.test(heading)?'Companion':/^sideboard\b/i.test(heading)?'Sideboard':/^maybeboard\b/i.test(heading)?'Maybeboard':'Mainboard',image=new URL(rawImage,'https://www.pipglyph.com').href;
       const scryfallId=image.match(/\/([0-9a-f]{8}-[0-9a-f-]{27,})\.(?:jpg|png|webp)(?:\?|$)/i)?.[1]||null;
